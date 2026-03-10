@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clínica Altamente
 
-## Getting Started
+Sistema de gestão para clínica médica com autenticação, gestão de pacientes, consultas e prontuários.
 
-First, run the development server:
+## Tech Stack
+
+- **Frontend/Backend**: Next.js 16 (App Router)
+- **Linguagem**: TypeScript
+- **ORM**: Prisma 7
+- **Banco de dados**: PostgreSQL
+- **Autenticação**: NextAuth v5 (Credentials)
+- **Estilização**: Tailwind CSS
+- **Runtime**: Bun
+
+## Primeiros Passos
+
+### 1. Configuração do Banco de Dados
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Iniciar o PostgreSQL via Docker
+docker-compose up -d
+
+# Criar as tabelas no banco
+bun run db:push
+
+# Criar usuário admin padrão
+bun run db:init
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Variáveis de Ambiente
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copie o arquivo de exemplo e configure as variáveis:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.example .env
+```
 
-## Learn More
+Edite o arquivo `.env` com suas configurações:
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Iniciar o Servidor
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+bun run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Acesse: http://localhost:3000
 
-## Deploy on Vercel
+### 4. Credenciais de Acesso
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Campo | Valor padrão |
+|-------|--------------|
+| Email | admin@clinica.com |
+| Senha | admin123 |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts Disponíveis
+
+| Comando | Descrição |
+|---------|-----------|
+| `bun run dev` | Iniciar servidor de desenvolvimento |
+| `bun run build` | Build de produção |
+| `bun run start` | Iniciar servidor de produção |
+| `bun run lint` | Verificar código |
+| `bun run db:generate` | Gerar Prisma Client |
+| `bun run db:push` | Sincronizar schema com banco |
+| `bun run db:studio` | Abrir Prisma Studio |
+| `bun run db:migrate` | Criar migração |
+| `bun run db:init` | Criar usuário admin padrão |
+
+## Estrutura do Projeto
+
+```
+src/
+├── app/                    # Páginas e API routes
+│   ├── api/auth/          # Rotas de autenticação
+│   └── ...
+├── lib/                   # Utilitários
+│   ├── auth.ts           # Configuração NextAuth
+│   ├── prisma.ts         # Instância PrismaClient
+│   └── bcrypt.ts         # Funções de hash
+└── ...
+prisma/
+├── schema.prisma         # Schema do banco
+└── seed.ts              # Script de inicialização
+```
+
+## Autenticação
+
+O sistema utiliza NextAuth v5 com provider Credentials:
+
+- Senha armazenada com bcrypt (salt 12)
+- Sessões via JWT
+- Página de login: `/login`
+
+## Banco de Dados
+
+### Tabelas Criadas
+
+- **User** - Usuários do sistema
+- **Account** - Contas de provedores OAuth
+- **Session** - Sessões ativas
+- **VerificationToken** - Tokens de verificação
+
+## Links Úteis
+
+- Board de tarefas: https://trello.com/c/GcMK1bt7/19-desenho-do-banco-de-dados
