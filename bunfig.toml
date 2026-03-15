@@ -1,0 +1,3 @@
+[test]
+preload = ["./src/lib/prisma.ts"]
+root = "./src/__tests__"

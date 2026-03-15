@@ -6,6 +6,39 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  PROFESSIONAL
+  SECRETARY
+  PATIENT
+  RESPONSIBLE
+  TEACHER
+  COORDINATOR
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AttendanceStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ReferralStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -13,11 +46,18 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  role          Role      @default(PATIENT)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
+  accounts     Account[]
+  sessions     Session[]
+  
+  patient       Patient?
+  professional  Professional?
+  responsible   Responsible?
+  secretary     Secretary?
+  teacher       Teacher?
 }
 
 model Account {
@@ -53,4 +93,191 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Patient {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  dateOfBirth    DateTime
+  gender          String?
+  cpf             String?  @unique
+  rg              String?
+  phone           String?
+  address         String?
+  emergencyContact String?
+  emergencyPhone  String?
+  medicalHistory String?  @db.Text
+  observations    String?  @db.Text
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responsible     Responsible?
+  appointments    Appointment[]
+  attendances     Attendance[]
+  reports         Report[]
+  referrals       Referral[]
+}
+
+model Responsible {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  patientId       String   @unique
+  cpf             String?
+  phone           String?
+  relationship    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model Secretary {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Teacher {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  school          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referrals       Referral[]
+}
+
+model Professional {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  specialty       String
+  licenseNumber   String?
+  bio             String?  @db.Text
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  attendances     Attendance[]
+  reports         Report[]
+  professionalSchedules ProfessionalSchedule[]
+}
+
+model ProfessionalSchedule {
+  id              String   @id @default(cuid())
+  professionalId  String
+  dayOfWeek       Int
+  startTime       String
+  endTime         String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  professional    Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, dayOfWeek])
+}
+
+model AppointmentType {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  durationMinutes Int      @default(60)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointments    Appointment[]
+}
+
+model Appointment {
+  id                String            @id @default(cuid())
+  patientId         String
+  professionalId    String
+  appointmentTypeId String
+  scheduledDateTime DateTime
+  endDateTime       DateTime
+  status            AppointmentStatus @default(SCHEDULED)
+  notes             String?           @db.Text
+  cancellationReason String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  patient           Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professional      Professional      @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  appointmentType   AppointmentType   @relation(fields: [appointmentTypeId], references: [id], onDelete: Cascade)
+  attendances       Attendance[]
+  reminders         Reminder[]
+}
+
+model Attendance {
+  id                String          @id @default(cuid())
+  appointmentId    String
+  patientId        String
+  professionalId   String
+  startTime        DateTime
+  endTime          DateTime?
+  status           AttendanceStatus @default(PENDING)
+  notes            String?         @db.Text
+  observations     String?         @db.Text
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  appointment      Appointment     @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient          Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professional     Professional    @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id              String   @id @default(cuid())
+  patientId       String
+  professionalId  String
+  title           String
+  content         String   @db.Text
+  reportDate      DateTime
+  reportType      String
+  isGenerated     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  patient         Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professional    Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+}
+
+model Referral {
+  id              String          @id @default(cuid())
+  patientId       String
+  teacherId       String
+  reason          String          @db.Text
+  status          ReferralStatus  @default(PENDING)
+  observations    String?
+  response        String?         @db.Text
+  referredDate    DateTime        @default(now())
+  responseDate    DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  patient         Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  teacher         Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+model Reminder {
+  id              String   @id @default(cuid())
+  appointmentId   String
+  type            String
+  sentDateTime    DateTime?
+  scheduledFor    DateTime
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointment     Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 }
