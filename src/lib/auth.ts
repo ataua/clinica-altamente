@@ -5,8 +5,7 @@ import { verifyPassword } from "@/lib/bcrypt"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: {
-    // Minimal adapter implementation for Prisma
-    createUser: async (userData) => {
+    createUser: async (userData: { name?: string; email: string; emailVerified?: Date; image?: string }) => {
       return prisma.user.create({
         data: {
           name: userData.name,
@@ -16,13 +15,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       })
     },
-    getUser: async (id) => {
+    getUser: async (id: string) => {
       return prisma.user.findUnique({ where: { id } })
     },
-    getUserByEmail: async (email) => {
+    getUserByEmail: async (email: string) => {
       return prisma.user.findUnique({ where: { email } })
     },
-    getUserByAccount: async (account) => {
+    getUserByAccount: async (account: { provider: string; providerAccountId: string }) => {
       const accountRecord = await prisma.account.findUnique({
         where: {
           provider_providerAccountId: {
@@ -34,7 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (!accountRecord) return null
       return prisma.user.findUnique({ where: { id: accountRecord.userId } })
     },
-    updateUser: async (data) => {
+    updateUser: async (data: { id: string; name?: string; email?: string; emailVerified?: Date; image?: string }) => {
       if (!data.id) throw new Error("User id is required")
       return prisma.user.update({
         where: { id: data.id },
@@ -46,13 +45,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       })
     },
-    deleteUser: async (id) => {
+    deleteUser: async (id: string) => {
       return prisma.user.delete({ where: { id } })
     },
-    linkAccount: async (accountData) => {
+    linkAccount: async (accountData: { userId: string; type: string; provider: string; providerAccountId: string; access_token?: string; refresh_token?: string; expires_at?: number; token_type?: string; scope?: string; id_token?: string; session_state?: string }) => {
       return prisma.account.create({ data: accountData })
     },
-    unlinkAccount: async (account) => {
+    unlinkAccount: async (account: { provider: string; providerAccountId: string }) => {
       return prisma.account.delete({
         where: {
           provider_providerAccountId: {
@@ -62,25 +61,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       })
     },
-    createSession: async (sessionData) => {
+    createSession: async (sessionData: { sessionToken: string; userId: string; expires: Date }) => {
       return prisma.session.create({ data: sessionData })
     },
-    getSession: async (token) => {
+    getSession: async (token: string) => {
       return prisma.session.findUnique({ where: { sessionToken: token } })
     },
-    updateSession: async (data) => {
+    updateSession: async (data: { sessionToken: string; expires: Date }) => {
       return prisma.session.update({
         where: { sessionToken: data.sessionToken },
         data: { expires: data.expires },
       })
     },
-    deleteSession: async (sessionToken) => {
+    deleteSession: async (sessionToken: string) => {
       return prisma.session.delete({ where: { sessionToken } })
     },
-    createVerificationToken: async (tokenData) => {
+    createVerificationToken: async (tokenData: { identifier: string; token: string; expires: Date }) => {
       return prisma.verificationToken.create({ data: tokenData })
     },
-    useVerificationToken: async (tokenData) => {
+    useVerificationToken: async (tokenData: { token: string }) => {
       const token = await prisma.verificationToken.findUnique({
         where: { token: tokenData.token },
       })
