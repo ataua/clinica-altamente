@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/toast";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -26,11 +27,17 @@ export default function RegisterPage() {
 
     if (formData.password !== formData.confirmPassword) {
       setError("As senhas não coincidem");
+      toast.error("As senhas não coincidem", {
+        description: "Por favor, verifique se as senhas são iguais",
+      });
       return;
     }
 
     if (formData.password.length < 6) {
       setError("A senha deve ter pelo menos 6 caracteres");
+      toast.error("Senha muito curta", {
+        description: "A senha deve ter pelo menos 6 caracteres",
+      });
       return;
     }
 
@@ -53,12 +60,21 @@ export default function RegisterPage() {
         throw new Error(data.error || "Erro ao criar conta");
       }
 
+      toast.success("Conta criada com sucesso!", {
+        description: "Você pode fazer login agora",
+      });
       router.push("/login?registered=true");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
+        toast.error("Erro ao criar conta", {
+          description: err.message,
+        });
       } else {
         setError("Ocorreu um erro ao criar a conta");
+        toast.error("Erro ao criar conta", {
+          description: "Tente novamente mais tarde",
+        });
       }
     } finally {
       setLoading(false);

@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { CalendarGrid } from '@/components/organisms/CalendarGrid'
 import { AppointmentModal } from '@/components/molecules/AppointmentModal'
 import { Button } from '@/components/atoms/Button'
+import { toast } from '@/components/ui/toast'
 
 interface Patient {
   id: string
@@ -93,6 +94,9 @@ export default function CalendarPage() {
       }
     } catch (error) {
       console.error('Error fetching data:', error)
+      toast.error('Erro ao carregar dados', {
+        description: 'Não foi possível carregar os dados do calendário',
+      })
     } finally {
       setLoading(false)
     }
@@ -125,13 +129,18 @@ export default function CalendarPage() {
         setIsModalOpen(false)
         setSelectedDate(undefined)
         fetchData()
+        toast.success('Agendamento criado com sucesso!')
       } else {
         const error = await res.json()
-        alert(error.message || 'Erro ao criar agendamento')
+        toast.error('Erro ao criar agendamento', {
+          description: error.message || 'Verifique os dados e tente novamente',
+        })
       }
     } catch (error) {
       console.error('Error creating appointment:', error)
-      alert('Erro ao criar agendamento')
+      toast.error('Erro ao criar agendamento', {
+        description: 'Tente novamente mais tarde',
+      })
     } finally {
       setSubmitting(false)
     }
@@ -147,13 +156,18 @@ export default function CalendarPage() {
 
       if (res.ok) {
         fetchData()
+        toast.success('Status atualizado com sucesso!')
       } else {
         const error = await res.json()
-        alert(error.message || 'Erro ao atualizar status')
+        toast.error('Erro ao atualizar status', {
+          description: error.message || 'Tente novamente',
+        })
       }
     } catch (error) {
       console.error('Error updating appointment:', error)
-      alert('Erro ao atualizar status')
+      toast.error('Erro ao atualizar status', {
+        description: 'Tente novamente mais tarde',
+      })
     }
   }
 
@@ -167,13 +181,18 @@ export default function CalendarPage() {
         setIsModalOpen(false)
         setSelectedAppointment(undefined)
         fetchData()
+        toast.success('Agendamento excluído com sucesso!')
       } else {
         const error = await res.json()
-        alert(error.message || 'Erro ao excluir agendamento')
+        toast.error('Erro ao excluir agendamento', {
+          description: error.message || 'Tente novamente',
+        })
       }
     } catch (error) {
       console.error('Error deleting appointment:', error)
-      alert('Erro ao excluir agendamento')
+      toast.error('Erro ao excluir agendamento', {
+        description: 'Tente novamente mais tarde',
+      })
     }
   }
 

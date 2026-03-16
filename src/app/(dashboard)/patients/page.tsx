@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { PatientTable } from '@/components/organisms/PatientTable'
 import { PatientModal } from '@/components/molecules/PatientModal'
+import { toast } from '@/components/ui/toast'
 
 interface ResponsibleContact {
   id: string
@@ -64,6 +65,9 @@ export default function PatientsPage() {
       }
     } catch (error) {
       console.error('Error fetching patients:', error)
+      toast.error('Erro ao carregar pacientes', {
+        description: 'Tente novamente mais tarde',
+      })
     } finally {
       setLoading(false)
     }
@@ -120,13 +124,18 @@ export default function PatientsPage() {
       if (res.ok) {
         setIsModalOpen(false)
         fetchPatients()
+        toast.success('Paciente criado com sucesso!')
       } else {
         const error = await res.json()
-        alert(error.message || 'Erro ao criar paciente')
+        toast.error('Erro ao criar paciente', {
+          description: error.message || 'Verifique os dados e tente novamente',
+        })
       }
     } catch (error) {
       console.error('Error creating patient:', error)
-      alert('Erro ao criar paciente')
+      toast.error('Erro ao criar paciente', {
+        description: 'Tente novamente mais tarde',
+      })
     } finally {
       setSubmitting(false)
     }
@@ -164,13 +173,18 @@ export default function PatientsPage() {
         setIsModalOpen(false)
         setEditingPatient(undefined)
         fetchPatients()
+        toast.success('Paciente atualizado com sucesso!')
       } else {
         const error = await res.json()
-        alert(error.message || 'Erro ao atualizar paciente')
+        toast.error('Erro ao atualizar paciente', {
+          description: error.message || 'Tente novamente',
+        })
       }
     } catch (error) {
       console.error('Error updating patient:', error)
-      alert('Erro ao atualizar paciente')
+      toast.error('Erro ao atualizar paciente', {
+        description: 'Tente novamente mais tarde',
+      })
     } finally {
       setSubmitting(false)
     }
@@ -184,13 +198,18 @@ export default function PatientsPage() {
       
       if (res.ok) {
         fetchPatients()
+        toast.success('Paciente excluído com sucesso!')
       } else {
         const error = await res.json()
-        alert(error.message || 'Erro ao excluir paciente')
+        toast.error('Erro ao excluir paciente', {
+          description: error.message || 'Tente novamente',
+        })
       }
     } catch (error) {
       console.error('Error deleting patient:', error)
-      alert('Erro ao excluir paciente')
+      toast.error('Erro ao excluir paciente', {
+        description: 'Tente novamente mais tarde',
+      })
     }
   }
 

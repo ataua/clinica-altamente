@@ -1,16 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("registered") === "true") {
+      toast.success("Conta criada com sucesso!", {
+        description: "Faça login para continuar",
+      });
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,11 +37,18 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError("Email ou senha incorretos");
+        toast.error("Email ou senha incorretos", {
+          description: "Verifique suas credenciais e tente novamente",
+        });
       } else {
-        router.push("/dashboard");
+        toast.success("Login realizado com sucesso!");
+        router.push("/");
       }
     } catch (err) {
       setError("Ocorreu um erro ao fazer login");
+      toast.error("Erro ao fazer login", {
+        description: "Tente novamente mais tarde",
+      });
     } finally {
       setLoading(false);
     }

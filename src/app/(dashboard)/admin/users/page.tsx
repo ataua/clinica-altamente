@@ -8,6 +8,7 @@ import { Input } from '@/components/atoms/Input'
 import { Select } from '@/components/atoms/Select'
 import { UserTable } from '@/components/organisms/UserTable'
 import { UserModal } from '@/components/molecules/UserModal'
+import { toast } from '@/components/ui/toast'
 
 interface User {
   id: string
@@ -56,6 +57,9 @@ export default function UsersPage() {
       }
     } catch (error) {
       console.error('Error fetching users:', error)
+      toast.error('Erro ao carregar usuários', {
+        description: 'Tente novamente mais tarde',
+      })
     } finally {
       setLoading(false)
     }
@@ -87,13 +91,18 @@ export default function UsersPage() {
       if (res.ok) {
         setIsModalOpen(false)
         fetchUsers()
+        toast.success('Usuário criado com sucesso!')
       } else {
         const error = await res.json()
-        alert(error.message || 'Erro ao criar usuário')
+        toast.error('Erro ao criar usuário', {
+          description: error.message || 'Verifique os dados e tente novamente',
+        })
       }
     } catch (error) {
       console.error('Error creating user:', error)
-      alert('Erro ao criar usuário')
+      toast.error('Erro ao criar usuário', {
+        description: 'Tente novamente mais tarde',
+      })
     } finally {
       setSubmitting(false)
     }
@@ -107,13 +116,18 @@ export default function UsersPage() {
       
       if (res.ok) {
         fetchUsers()
+        toast.success('Usuário excluído com sucesso!')
       } else {
         const error = await res.json()
-        alert(error.message || 'Erro ao excluir usuário')
+        toast.error('Erro ao excluir usuário', {
+          description: error.message || 'Tente novamente',
+        })
       }
     } catch (error) {
       console.error('Error deleting user:', error)
-      alert('Erro ao excluir usuário')
+      toast.error('Erro ao excluir usuário', {
+        description: 'Tente novamente mais tarde',
+      })
     }
   }
 

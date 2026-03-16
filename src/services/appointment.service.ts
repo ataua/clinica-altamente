@@ -182,6 +182,97 @@ export class AppointmentService {
     })
   }
 
+  async cancel(id: string, reason: string) {
+    const existing = await prisma.appointment.findUnique({ where: { id } })
+    if (!existing) throw new Error('Agendamento não encontrado')
+
+    if (existing.status === 'CANCELLED') {
+      throw new Error('Agendamento já está cancelado')
+    }
+
+    if (existing.status === 'COMPLETED') {
+      throw new Error('Não é possível cancelar um agendamento concluído')
+    }
+
+    return prisma.appointment.update({
+      where: { id },
+      data: {
+        status: 'CANCELLED' as AppointmentStatus,
+        cancellationReason: reason,
+      },
+      include: {
+        patient: { include: { user: { select: { name: true } } } },
+        professional: { include: { user: { select: { name: true } } } },
+        appointmentType: true,
+      },
+    })
+  }
+
+  async reschedule(id: string, newDateTime: string, newProfessionalId?: string) {
+    const existing = await prisma.appointment.findUnique({ where: { id } })
+    if (!existing) throw new Error('Agendamento não encontrado')
+
+    if (existing.status === 'CANCELLED') {
+      throw new Error('Não é possível reagendar um agendamento cancelado')
+    }
+
+    if (existing.status === 'COMPLETED') {
+      throw new Error('Não é possível reagendar um agendamento concluído')
+    }
+
+    const scheduledDateTime = new Date(newDateTime)
+    const appointmentType = await prisma.appointmentType.findUnique({
+      where: { id: existing.appointmentTypeId },
+    })
+
+    if (!appointmentType) throw new Error('Tipo de agendamento não encontrado')
+
+    const endDateTime = new Date(scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000)
+
+    const professionalId = newProfessionalId || existing.professionalId
+
+    const conflictingAppointment = await prisma.appointment.findFirst({
+      where: {
+        id: { not: id },
+        professionalId,
+        status: { in: ['SCHEDULED', 'CONFIRMED'] },
+        OR: [
+          {
+            scheduledDateTime: { lte: scheduledDateTime },
+            endDateTime: { gt: scheduledDateTime },
+          },
+          {
+            scheduledDateTime: { lt: endDateTime },
+            endDateTime: { gte: endDateTime },
+          },
+          {
+            scheduledDateTime: { gte: scheduledDateTime },
+            endDateTime: { lte: endDateTime },
+          },
+        ],
+      },
+    })
+
+    if (conflictingAppointment) {
+      throw new Error('Horário conflictado com outro agendamento')
+    }
+
+    return prisma.appointment.update({
+      where: { id },
+      data: {
+        scheduledDateTime,
+        endDateTime,
+        status: 'SCHEDULED' as AppointmentStatus,
+        ...(newProfessionalId && { professionalId: newProfessionalId }),
+      },
+      include: {
+        patient: { include: { user: { select: { name: true } } } },
+        professional: { include: { user: { select: { name: true } } } },
+        appointmentType: true,
+      },
+    })
+  }
+
   async delete(id: string) {
     return prisma.appointment.delete({ where: { id } })
   }
