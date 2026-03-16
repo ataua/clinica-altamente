@@ -195,6 +195,7 @@ model ProfessionalSchedule {
   professional    Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@unique([professionalId, dayOfWeek])
+  @@index([professionalId, dayOfWeek, isActive])
 }
 
 model AppointmentType {
@@ -227,6 +228,10 @@ model Appointment {
   appointmentType   AppointmentType   @relation(fields: [appointmentTypeId], references: [id], onDelete: Cascade)
   attendances       Attendance[]
   reminders         Reminder[]
+
+  @@index([professionalId, status, scheduledDateTime])
+  @@index([scheduledDateTime])
+  @@index([patientId])
 }
 
 model Attendance {
