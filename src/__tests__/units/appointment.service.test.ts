@@ -320,6 +320,167 @@ describe('AppointmentService', () => {
     })
   })
 
+  describe('cancel', () => {
+    it('should cancel an appointment', async () => {
+      const created = await appointmentService.create({
+        patientId: testPatientId,
+        professionalId: testProfessionalId,
+        appointmentTypeId: testAppointmentTypeId,
+        scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
+      })
+
+      const cancelled = await appointmentService.cancel(created.id, 'Paciente desistiu')
+
+      expect(cancelled.status).toBe('CANCELLED')
+      expect(cancelled.cancellationReason).toBe('Paciente desistiu')
+    })
+
+    it('should throw error when cancelling already cancelled appointment', async () => {
+      const created = await appointmentService.create({
+        patientId: testPatientId,
+        professionalId: testProfessionalId,
+        appointmentTypeId: testAppointmentTypeId,
+        scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
+      })
+
+      await appointmentService.cancel(created.id, 'Primeiro cancelamento')
+
+      await expect(
+        appointmentService.cancel(created.id, 'Segundo cancelamento')
+      ).rejects.toThrow('Agendamento já está cancelado')
+    })
+
+    it('should throw error when cancelling completed appointment', async () => {
+      const created = await appointmentService.create({
+        patientId: testPatientId,
+        professionalId: testProfessionalId,
+        appointmentTypeId: testAppointmentTypeId,
+        scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
+      })
+
+      await appointmentService.update(created.id, { status: 'COMPLETED' })
+
+      await expect(
+        appointmentService.cancel(created.id, 'Cancelar depois de concluído')
+      ).rejects.toThrow('Não é possível cancelar um agendamento concluído')
+    })
+
+    it('should throw error for non-existent appointment', async () => {
+      await expect(
+        appointmentService.cancel('non-existent-id', 'Motivo')
+      ).rejects.toThrow('Agendamento não encontrado')
+    })
+  })
+
+  describe('reschedule', () => {
+    it('should reschedule an appointment', async () => {
+      const originalDateTime = new Date(Date.now() + 86400000)
+      originalDateTime.setHours(10, 0, 0, 0)
+
+      const created = await appointmentService.create({
+        patientId: testPatientId,
+        professionalId: testProfessionalId,
+        appointmentTypeId: testAppointmentTypeId,
+        scheduledDateTime: originalDateTime.toISOString(),
+      })
+
+      const newDateTime = new Date(Date.now() + 86400000 * 2)
+      newDateTime.setHours(14, 0, 0, 0)
+
+      const rescheduled = await appointmentService.reschedule(
+        created.id,
+        newDateTime.toISOString()
+      )
+
+      expect(rescheduled.status).toBe('SCHEDULED')
+      expect(new Date(rescheduled.scheduledDateTime).getHours()).toBe(14)
+    })
+
+    it('should throw error when rescheduling cancelled appointment', async () => {
+      const created = await appointmentService.create({
+        patientId: testPatientId,
+        professionalId: testProfessionalId,
+        appointmentTypeId: testAppointmentTypeId,
+        scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
+      })
+
+      await appointmentService.cancel(created.id, 'Cancelado')
+
+      const newDateTime = new Date(Date.now() + 86400000 * 2)
+
+      await expect(
+        appointmentService.reschedule(created.id, newDateTime.toISOString())
+      ).rejects.toThrow('Não é possível reagendar um agendamento cancelado')
+    })
+
+    it('should throw error when rescheduling completed appointment', async () => {
+      const created = await appointmentService.create({
+        patientId: testPatientId,
+        professionalId: testProfessionalId,
+        appointmentTypeId: testAppointmentTypeId,
+        scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
+      })
+
+      await appointmentService.update(created.id, { status: 'COMPLETED' })
+
+      const newDateTime = new Date(Date.now() + 86400000 * 2)
+
+      await expect(
+        appointmentService.reschedule(created.id, newDateTime.toISOString())
+      ).rejects.toThrow('Não é possível reagendar um agendamento concluído')
+    })
+
+    it('should throw error for conflicting time slot', async () => {
+      const scheduledTime1 = new Date(Date.now() + 86400000)
+      scheduledTime1.setHours(10, 0, 0, 0)
+
+      const scheduledTime2 = new Date(Date.now() + 86400000)
+      scheduledTime2.setHours(14, 0, 0, 0)
+
+      await appointmentService.create({
+        patientId: testPatientId,
+        professionalId: testProfessionalId,
+        appointmentTypeId: testAppointmentTypeId,
+        scheduledDateTime: scheduledTime1.toISOString(),
+      })
+
+      const user2 = await prisma.user.create({
+        data: {
+          name: 'Patient 2',
+          email: uniqueEmail(),
+          password: 'hashed',
+          role: 'PATIENT',
+        },
+      })
+
+      const patient2 = await prisma.patient.create({
+        data: {
+          userId: user2.id,
+          phone: '11999999999',
+        },
+      })
+
+      const appointment2 = await appointmentService.create({
+        patientId: patient2.id,
+        professionalId: testProfessionalId,
+        appointmentTypeId: testAppointmentTypeId,
+        scheduledDateTime: scheduledTime2.toISOString(),
+      })
+
+      await expect(
+        appointmentService.reschedule(appointment2.id, scheduledTime1.toISOString())
+      ).rejects.toThrow('Horário conflictado')
+    })
+
+    it('should throw error for non-existent appointment', async () => {
+      const newDateTime = new Date(Date.now() + 86400000 * 2)
+
+      await expect(
+        appointmentService.reschedule('non-existent-id', newDateTime.toISOString())
+      ).rejects.toThrow('Agendamento não encontrado')
+    })
+  })
+
   describe('getAppointmentTypes', () => {
     it('should return active appointment types', async () => {
       const types = await appointmentService.getAppointmentTypes()

@@ -20,3 +20,32 @@ declare module 'next-auth/jwt' {
     role: 'ADMIN' | 'PROFESSIONAL' | 'SECRETARY' | 'PATIENT' | 'RESPONSIBLE' | 'TEACHER' | 'COORDINATOR'
   }
 }
+
+interface SwaggerUIBundle {
+  (config: {
+    url?: string
+    spec?: object
+    dom_id?: string
+    deepLinking?: boolean
+    presets?: any[]
+    layout?: string
+    docExpansion?: string
+    filter?: boolean | string
+    showExtensions?: boolean
+    showCommonExtensions?: boolean
+    tryItOutEnabled?: boolean
+  }): any
+  presets: {
+    apis: any
+    SwaggerUIStandalonePreset: any
+  }
+  SwaggerUIStandalonePreset: any
+}
+
+declare global {
+  interface Window {
+    SwaggerUIBundle: SwaggerUIBundle
+  }
+}
+
+export {}

@@ -64,7 +64,7 @@ describe('User', () => {
   })
 
   it('should create user with different roles', async () => {
-    const roles = ['ADMIN', 'PROFESSIONAL', 'SECRETARY', 'PATIENT', 'COORDINATOR']
+    const roles: ('ADMIN' | 'PROFESSIONAL' | 'SECRETARY' | 'PATIENT' | 'COORDINATOR')[] = ['ADMIN', 'PROFESSIONAL', 'SECRETARY', 'PATIENT', 'COORDINATOR']
 
     for (const role of roles) {
       const password = await hashPassword('testpassword123')
@@ -73,7 +73,7 @@ describe('User', () => {
           email: `user_${role.toLowerCase()}_${Date.now()}@test.com`,
           name: `Test ${role}`,
           password,
-          role: role as any,
+          role,
         },
       })
 

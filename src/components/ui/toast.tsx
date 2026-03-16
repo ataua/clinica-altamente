@@ -1,6 +1,6 @@
 'use client'
 
-import { toast as sonnerToast, ToastToaster as SonnerToaster } from 'sonner'
+import { toast as sonnerToast } from 'sonner'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 
@@ -22,5 +22,3 @@ export const toast = {
   warning: toastFunction('warning'),
   promise: sonnerToast.promise,
 }
-
-export { SonnerToaster }
