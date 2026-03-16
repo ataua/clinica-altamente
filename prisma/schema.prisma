@@ -98,7 +98,7 @@ model VerificationToken {
 model Patient {
   id              String   @id @default(cuid())
   userId          String   @unique
-  dateOfBirth    DateTime
+  dateOfBirth     DateTime?
   gender          String?
   cpf             String?  @unique
   rg              String?
@@ -132,6 +132,17 @@ model Responsible {
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model ResponsibleContact {
+  id           String   @id @default(cuid())
+  name         String
+  email        String?
+  phone        String   @unique
+  cpf          String?  @unique
+  relationship String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Secretary {
