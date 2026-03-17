@@ -1,5 +1,5 @@
 import { DefaultSession, DefaultUser } from 'next-auth'
-import { JWT, DefaultJWT } from 'next-auth/jwt'
+import { DefaultJWT } from 'next-auth/jwt'
 
 declare module 'next-auth' {
   interface Session {
@@ -27,19 +27,19 @@ interface SwaggerUIBundle {
     spec?: object
     dom_id?: string
     deepLinking?: boolean
-    presets?: any[]
+    presets?: unknown[]
     layout?: string
     docExpansion?: string
     filter?: boolean | string
     showExtensions?: boolean
     showCommonExtensions?: boolean
     tryItOutEnabled?: boolean
-  }): any
+  }): unknown
   presets: {
-    apis: any
-    SwaggerUIStandalonePreset: any
+    apis: unknown
+    SwaggerUIStandalonePreset: unknown
   }
-  SwaggerUIStandalonePreset: any
+  SwaggerUIStandalonePreset: unknown
 }
 
 declare global {

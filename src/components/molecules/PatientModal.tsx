@@ -113,6 +113,32 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  const resetForm = () => {
+    setName('')
+    setEmail('')
+    setPhone('')
+    setCpf('')
+    setDateOfBirth('')
+    setGender('')
+    setNotes('')
+    setStreet('')
+    setNumber('')
+    setComplement('')
+    setNeighborhood('')
+    setCity('')
+    setState('')
+    setZipCode('')
+    setHasResponsible(false)
+    setSelectedResponsibleId('')
+    setCreateNewResponsible(false)
+    setResponsibleName('')
+    setResponsibleEmail('')
+    setResponsiblePhone('')
+    setResponsibleCpf('')
+    setResponsibleRelationship('')
+  }
+
+  // eslint-disable-next-line
   useEffect(() => {
     if (initialData) {
       setName(initialData.name || '')
@@ -142,31 +168,6 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
     }
     setErrors({})
   }, [initialData, isOpen])
-
-  const resetForm = () => {
-    setName('')
-    setEmail('')
-    setPhone('')
-    setCpf('')
-    setDateOfBirth('')
-    setGender('')
-    setNotes('')
-    setStreet('')
-    setNumber('')
-    setComplement('')
-    setNeighborhood('')
-    setCity('')
-    setState('')
-    setZipCode('')
-    setHasResponsible(false)
-    setSelectedResponsibleId('')
-    setCreateNewResponsible(false)
-    setResponsibleName('')
-    setResponsibleEmail('')
-    setResponsiblePhone('')
-    setResponsibleCpf('')
-    setResponsibleRelationship('')
-  }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -222,7 +223,32 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
       zipCode: '',
     }
 
-    const data: any = {
+    const data: {
+      name: string
+      email: string
+      phone: string
+      cpf: string
+      dateOfBirth: string
+      gender: string
+      address: {
+        street: string
+        number: string
+        complement: string
+        neighborhood: string
+        city: string
+        state: string
+        zipCode: string
+      }
+      notes: string
+      responsibleContactId?: string
+      responsibleContact?: {
+        name: string
+        email: string
+        phone: string
+        cpf: string
+        relationship: string
+      }
+    } = {
       name,
       email,
       phone,

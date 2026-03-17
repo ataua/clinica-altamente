@@ -53,7 +53,7 @@ interface Patient {
 }
 
 export default function PatientHistoryPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const params = useParams()
   const patientId = params.id as string
@@ -101,7 +101,18 @@ export default function PatientHistoryPage() {
     }
   }, [status, router, fetchData])
 
-  const handleCreateAttendance = async (data: any) => {
+  interface AttendanceFormData {
+    appointmentId: string
+    patientId: string
+    professionalId: string
+    startTime: string
+    notes?: string
+    observations?: string
+    diagnosis?: string
+    treatmentPlan?: string
+  }
+
+  const handleCreateAttendance = async (data: AttendanceFormData) => {
     try {
       setSubmitting(true)
       const res = await fetch('/api/attendances', {
@@ -115,11 +126,11 @@ export default function PatientHistoryPage() {
         setIsModalOpen(false)
         fetchData()
       } else {
-        const error = await res.json()
-        toast.error('Erro ao registrar atendimento', { description: error.message })
+        const errorData = await res.json()
+        toast.error('Erro ao registrar atendimento', { description: errorData.message })
       }
-    } catch (error) {
-      console.error('Error creating attendance:', error)
+    } catch {
+      console.error('Error creating attendance')
       toast.error('Erro ao registrar atendimento')
     } finally {
       setSubmitting(false)
@@ -140,7 +151,7 @@ export default function PatientHistoryPage() {
       } else {
         toast.error('Erro ao iniciar atendimento')
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao iniciar atendimento')
     }
   }
@@ -148,16 +159,6 @@ export default function PatientHistoryPage() {
   const handleCompleteAttendance = async (appointmentId: string) => {
     setSelectedAppointment(appointments.find(a => a.id === appointmentId))
     setIsModalOpen(true)
-  }
-
-  const statusColors: Record<string, string> = {
-    SCHEDULED: 'blue',
-    CONFIRMED: 'green',
-    IN_PROGRESS: 'yellow',
-    COMPLETED: 'green',
-    CANCELLED: 'red',
-    NO_SHOW: 'orange',
-    PENDING: 'gray',
   }
 
   const statusLabels: Record<string, string> = {
@@ -249,7 +250,7 @@ export default function PatientHistoryPage() {
                         Dr(a). {apt.professional.user.name} - {apt.professional.specialty}
                       </p>
                     </div>
-                    <AppointmentStatusBadge status={apt.status as any} />
+                    <AppointmentStatusBadge status={apt.status as 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'} />
                   </div>
                   {(apt.status === 'CONFIRMED' || apt.status === 'SCHEDULED') && (
                     <div className="mt-4 flex gap-2">

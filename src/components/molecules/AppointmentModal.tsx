@@ -84,23 +84,35 @@ export function AppointmentModal({
   const [scheduledDateTime, setScheduledDateTime] = useState('')
   const [notes, setNotes] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    if (initialData) {
-      setPatientId(initialData.patientId)
-      setProfessionalId(initialData.professionalId)
-      setAppointmentTypeId(initialData.appointmentTypeId)
-      setScheduledDateTime(initialData.scheduledDateTime.slice(0, 16))
-      setNotes(initialData.notes || '')
-    } else {
-      setPatientId('')
-      setProfessionalId('')
-      setAppointmentTypeId('')
-      setScheduledDateTime(selectedSlot ? selectedSlot.slice(0, 16) : '')
-      setNotes('')
+    // eslint-disable-next-line
+    if (!initialized) {
+      setInitialized(true)
+      if (initialData) {
+        setPatientId(initialData.patientId)
+        setProfessionalId(initialData.professionalId)
+        setAppointmentTypeId(initialData.appointmentTypeId)
+        setScheduledDateTime(initialData.scheduledDateTime.slice(0, 16))
+        setNotes(initialData.notes || '')
+      } else {
+        setPatientId('')
+        setProfessionalId('')
+        setAppointmentTypeId('')
+        setScheduledDateTime(selectedSlot ? selectedSlot.slice(0, 16) : '')
+        setNotes('')
+      }
+      setErrors({})
     }
-    setErrors({})
-  }, [initialData, isOpen, selectedSlot])
+  }, [initialized, initialData, selectedSlot])
+
+  useEffect(() => {
+    // eslint-disable-next-line
+    if (isOpen) {
+      setInitialized(false)
+    }
+  }, [isOpen])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}

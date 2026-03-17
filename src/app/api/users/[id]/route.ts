@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { userService } from '@/services/user.service'
 import { UpdateUserDTO, UserParamsDTO } from '@/dtos/user.dto'
+import { ZodError } from 'zod'
 
 export async function GET(
   request: NextRequest,
@@ -36,16 +37,17 @@ export async function GET(
     }
 
     return NextResponse.json(user)
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error fetching user:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao buscar usuário'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao buscar usuário' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }
@@ -98,16 +100,17 @@ export async function PUT(
     const user = await userService.update(id, data)
 
     return NextResponse.json({ message: 'Usuário atualizado com sucesso', user })
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error updating user:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao atualizar usuário'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao atualizar usuário' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }
@@ -154,16 +157,17 @@ export async function DELETE(
     await userService.delete(id)
 
     return NextResponse.json({ message: 'Usuário excluído com sucesso' })
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error deleting user:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao excluir usuário'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao excluir usuário' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }

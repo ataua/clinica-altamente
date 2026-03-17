@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { patientService } from '@/services/patient.service'
-import { CreatePatientDTO, UpdatePatientDTO, PatientParamsDTO, PatientQueryDTO } from '@/dtos/patient.dto'
+import { CreatePatientDTO, PatientQueryDTO } from '@/dtos/patient.dto'
+import { ZodError } from 'zod'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,10 +25,11 @@ export async function GET(request: NextRequest) {
     const result = await patientService.findAll(query)
 
     return NextResponse.json(result)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching patients:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao buscar pacientes'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao buscar pacientes' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }
@@ -70,16 +72,17 @@ export async function POST(request: NextRequest) {
       { message: 'Paciente criado com sucesso', patient },
       { status: 201 }
     )
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error creating patient:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao criar paciente'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao criar paciente' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }

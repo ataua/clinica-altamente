@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { patientService } from '@/services/patient.service'
 import { UpdatePatientDTO, PatientParamsDTO } from '@/dtos/patient.dto'
+import { ZodError } from 'zod'
 
 export async function GET(
   request: NextRequest,
@@ -28,16 +29,17 @@ export async function GET(
     }
 
     return NextResponse.json(patient)
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error fetching patient:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao buscar paciente'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao buscar paciente' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }
@@ -83,16 +85,17 @@ export async function PUT(
     const patient = await patientService.update(id, data)
 
     return NextResponse.json({ message: 'Paciente atualizado com sucesso', patient })
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error updating patient:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao atualizar paciente'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao atualizar paciente' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }
@@ -132,16 +135,17 @@ export async function DELETE(
     await patientService.delete(id)
 
     return NextResponse.json({ message: 'Paciente excluído com sucesso' })
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error deleting patient:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao excluir paciente'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao excluir paciente' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }

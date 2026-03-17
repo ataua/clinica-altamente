@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/bcrypt'
-import { Prisma } from '@prisma/client'
+import { Prisma, Role } from '@prisma/client'
 
 export class UserService {
   async findAll(params: {
@@ -15,7 +15,7 @@ export class UserService {
     const where: Prisma.UserWhereInput = {}
     
     if (role) {
-      where.role = role as any
+      where.role = role as Role
     }
     
     if (search) {
@@ -92,7 +92,7 @@ export class UserService {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role: (data.role as any) || 'PATIENT',
+        role: (data.role as Role) || 'PATIENT',
       },
       select: {
         id: true,
@@ -114,7 +114,7 @@ export class UserService {
     
     if (data.name) updateData.name = data.name
     if (data.email) updateData.email = data.email
-    if (data.role) updateData.role = data.role as any
+    if (data.role) updateData.role = data.role as Role
     if (data.password) {
       updateData.password = await hashPassword(data.password)
     }

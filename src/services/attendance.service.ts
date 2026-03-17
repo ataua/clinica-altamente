@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { AttendanceStatus } from '@prisma/client'
+import { AttendanceStatus, Prisma } from '@prisma/client'
 
 export type AttendanceWithRelations = {
   id: string
@@ -95,7 +95,7 @@ class AttendanceService {
     const limit = params.limit || 10
     const skip = (page - 1) * limit
 
-    const where: any = {}
+    const where: Prisma.AttendanceWhereInput = {}
     if (params.patientId) where.patientId = params.patientId
     if (params.professionalId) where.professionalId = params.professionalId
     if (params.appointmentId) where.appointmentId = params.appointmentId
@@ -161,7 +161,7 @@ class AttendanceService {
       endTime?: Date
     }
   ) {
-    const updateData: any = {}
+    const updateData: Prisma.AttendanceUpdateInput = {}
     if (data.notes !== undefined) updateData.notes = data.notes
     if (data.observations !== undefined) updateData.observations = data.observations
     if (data.diagnosis !== undefined) updateData.diagnosis = data.diagnosis

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { userService } from '@/services/user.service'
-import { CreateUserDTO, UpdateUserDTO, UserParamsDTO, UserQueryDTO } from '@/dtos/user.dto'
+import { CreateUserDTO, UserQueryDTO } from '@/dtos/user.dto'
+import { ZodError } from 'zod'
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,10 +33,11 @@ export async function GET(request: NextRequest) {
     const result = await userService.findAll(query)
 
     return NextResponse.json(result)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching users:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao buscar usuários'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao buscar usuários' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }
@@ -76,16 +78,17 @@ export async function POST(request: NextRequest) {
       { message: 'Usuário criado com sucesso', user },
       { status: 201 }
     )
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error creating user:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao criar usuário'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao criar usuário' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }

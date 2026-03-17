@@ -33,20 +33,32 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading }:
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('PATIENT')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [initialized, setInitialized] = useState(false)
 
+  // eslint-disable-next-line
   useEffect(() => {
-    if (initialData) {
-      setName(initialData.name)
-      setEmail(initialData.email)
-      setRole(initialData.role)
-    } else {
-      setName('')
-      setEmail('')
-      setPassword('')
-      setRole('PATIENT')
+    if (!initialized) {
+      setInitialized(true)
+      if (initialData) {
+        setName(initialData.name)
+        setEmail(initialData.email)
+        setRole(initialData.role)
+      } else {
+        setName('')
+        setEmail('')
+        setPassword('')
+        setRole('PATIENT')
+      }
+      setErrors({})
     }
-    setErrors({})
-  }, [initialData, isOpen])
+  }, [initialized, initialData])
+
+  // eslint-disable-next-line
+  useEffect(() => {
+    if (isOpen) {
+      setInitialized(false)
+    }
+  }, [isOpen])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

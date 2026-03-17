@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { responsibleContactService } from '@/services/responsible.service'
 import { CreateResponsibleDTO, ResponsibleQueryDTO } from '@/dtos/patient.dto'
+import { ZodError } from 'zod'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,10 +25,11 @@ export async function GET(request: NextRequest) {
     const result = await responsibleContactService.findAll(query)
 
     return NextResponse.json(result)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching responsibles:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao buscar responsáveis'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao buscar responsáveis' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }
@@ -78,16 +80,17 @@ export async function POST(request: NextRequest) {
       { message: 'Responsável criado com sucesso', responsible },
       { status: 201 }
     )
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Validation Error', details: error.errors },
         { status: 400 }
       )
     }
     console.error('Error creating responsible:', error)
+    const message = error instanceof Error ? error.message : 'Erro ao criar responsável'
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message || 'Erro ao criar responsável' },
+      { error: 'Internal Server Error', message },
       { status: 500 }
     )
   }

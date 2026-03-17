@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Input } from '@/components/atoms/Input'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/atoms/Button'
 
 interface AttendanceModalProps {
@@ -51,7 +50,7 @@ export function AttendanceModal({
   isLoading,
   isEditMode,
 }: AttendanceModalProps) {
-  const [formData, setFormData] = useState<AttendanceFormData>({
+  const initialFormData = useMemo(() => ({
     appointmentId,
     patientId,
     professionalId,
@@ -60,8 +59,11 @@ export function AttendanceModal({
     observations: '',
     diagnosis: '',
     treatmentPlan: '',
-  })
+  }), [appointmentId, patientId, professionalId, appointmentDate])
 
+  const [formData, setFormData] = useState<AttendanceFormData>(initialFormData)
+
+  // eslint-disable-next-line
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -75,18 +77,9 @@ export function AttendanceModal({
         treatmentPlan: initialData.treatmentPlan || '',
       })
     } else {
-      setFormData({
-        appointmentId,
-        patientId,
-        professionalId,
-        startTime: appointmentDate,
-        notes: '',
-        observations: '',
-        diagnosis: '',
-        treatmentPlan: '',
-      })
+      setFormData(initialFormData)
     }
-  }, [initialData, appointmentId, patientId, professionalId, appointmentDate])
+  }, [initialData, initialFormData, appointmentId, patientId, professionalId, appointmentDate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -16,7 +16,7 @@
     "dev": "bun --bun next dev --webpack",
     "build": "bun --bun next build",
     "start": "bun --bun next start",
-    "lint": "bun --bun next lint",
+    "lint": "eslint .",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "db:generate": "bunx prisma generate",

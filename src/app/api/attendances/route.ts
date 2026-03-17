@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       patientId,
       professionalId,
       appointmentId: appointmentId,
-      status: status as any,
+      status: status as 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW',
     })
 
     return NextResponse.json(result)
