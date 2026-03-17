@@ -29,10 +29,11 @@ interface PatientTableProps {
   onEdit: (id: string) => void
   onDelete: (id: string) => void
   onCreate: () => void
+  onViewHistory?: (id: string) => void
   isLoading?: boolean
 }
 
-export function PatientTable({ patients, onEdit, onDelete, onCreate, isLoading }: PatientTableProps) {
+export function PatientTable({ patients, onEdit, onDelete, onCreate, onViewHistory, isLoading }: PatientTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
 
@@ -92,6 +93,7 @@ export function PatientTable({ patients, onEdit, onDelete, onCreate, isLoading }
               patient={patient}
               onEdit={onEdit}
               onDelete={onDelete}
+              onViewHistory={onViewHistory}
             />
           ))}
         </div>
@@ -150,6 +152,14 @@ export function PatientTable({ patients, onEdit, onDelete, onCreate, isLoading }
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex gap-2 justify-end">
+                      {onViewHistory && (
+                        <button
+                          onClick={() => onViewHistory(patient.id)}
+                          className="text-purple-600 hover:text-purple-700 text-sm"
+                        >
+                          Histórico
+                        </button>
+                      )}
                       <button
                         onClick={() => onEdit(patient.id)}
                         className="text-blue-600 hover:text-blue-700 text-sm"

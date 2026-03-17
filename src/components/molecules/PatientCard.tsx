@@ -21,9 +21,10 @@ interface PatientCardProps {
   }
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
+  onViewHistory?: (id: string) => void
 }
 
-export function PatientCard({ patient, onEdit, onDelete }: PatientCardProps) {
+export function PatientCard({ patient, onEdit, onDelete, onViewHistory }: PatientCardProps) {
   const formatDate = (date: string | null) => {
     if (!date) return '-'
     return new Date(date).toLocaleDateString('pt-BR')
@@ -89,6 +90,14 @@ export function PatientCard({ patient, onEdit, onDelete }: PatientCardProps) {
       )}
 
       <div className="flex gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+        {onViewHistory && (
+          <button
+            onClick={() => onViewHistory(patient.id)}
+            className="flex-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+          >
+            Histórico
+          </button>
+        )}
         {onEdit && (
           <button
             onClick={() => onEdit(patient.id)}

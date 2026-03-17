@@ -120,7 +120,7 @@ export default function AppointmentsPage() {
   }
 
   const handleReschedule = async (id: string) => {
-    const newDateTime = prompt('Nova data/hora (YYYY-MM-DDTHh:mm):')
+    const newDateTime = prompt('Nova data/hora (YYYY-MM-DDTHH:mm):')
     if (!newDateTime) return
 
     try {
@@ -144,6 +144,82 @@ export default function AppointmentsPage() {
       toast.error('Erro ao reagendar', {
         description: 'Tente novamente mais tarde',
       })
+    }
+  }
+
+  const handleConfirm = async (id: string) => {
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CONFIRMED' }),
+      })
+
+      if (res.ok) {
+        fetchAppointments()
+        toast.success('Agendamento confirmado!')
+      } else {
+        toast.error('Erro ao confirmar agendamento')
+      }
+    } catch (error) {
+      toast.error('Erro ao confirmar agendamento')
+    }
+  }
+
+  const handleStart = async (id: string) => {
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'IN_PROGRESS' }),
+      })
+
+      if (res.ok) {
+        fetchAppointments()
+        toast.success('Atendimento iniciado!')
+      } else {
+        toast.error('Erro ao iniciar atendimento')
+      }
+    } catch (error) {
+      toast.error('Erro ao iniciar atendimento')
+    }
+  }
+
+  const handleComplete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' }),
+      })
+
+      if (res.ok) {
+        fetchAppointments()
+        toast.success('Atendimento concluído!')
+      } else {
+        toast.error('Erro ao concluir atendimento')
+      }
+    } catch (error) {
+      toast.error('Erro ao concluir atendimento')
+    }
+  }
+
+  const handleNoShow = async (id: string) => {
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'NO_SHOW' }),
+      })
+
+      if (res.ok) {
+        fetchAppointments()
+        toast.warning('Paciente não compareceu')
+      } else {
+        toast.error('Erro ao registrar ausência')
+      }
+    } catch (error) {
+      toast.error('Erro ao registrar ausência')
     }
   }
 
@@ -249,8 +325,40 @@ export default function AppointmentsPage() {
                         <AppointmentStatusBadge status={apt.status} />
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex gap-2 justify-end">
-                          {apt.status !== 'CANCELLED' && apt.status !== 'COMPLETED' && (
+                        <div className="flex gap-2 justify-end flex-wrap">
+                          {apt.status === 'SCHEDULED' && (
+                            <>
+                              <button
+                                onClick={() => handleConfirm(apt.id)}
+                                className="text-sm text-green-600 hover:text-green-700 font-medium"
+                              >
+                                Confirmar
+                              </button>
+                              <button
+                                onClick={() => handleNoShow(apt.id)}
+                                className="text-sm text-orange-600 hover:text-orange-700"
+                              >
+                                Não Compareceu
+                              </button>
+                            </>
+                          )}
+                          {apt.status === 'CONFIRMED' && (
+                            <button
+                              onClick={() => handleStart(apt.id)}
+                              className="text-sm text-yellow-600 hover:text-yellow-700 font-medium"
+                            >
+                              Iniciar
+                            </button>
+                          )}
+                          {apt.status === 'IN_PROGRESS' && (
+                            <button
+                              onClick={() => handleComplete(apt.id)}
+                              className="text-sm text-green-600 hover:text-green-700 font-medium"
+                            >
+                              Concluir
+                            </button>
+                          )}
+                          {(apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED' || apt.status === 'IN_PROGRESS') && (
                             <>
                               <button
                                 onClick={() => handleReschedule(apt.id)}

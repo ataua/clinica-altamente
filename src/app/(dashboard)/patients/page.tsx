@@ -221,6 +221,10 @@ export default function PatientsPage() {
     }
   }
 
+  const handleViewHistory = (id: string) => {
+    router.push(`/patients/${id}/history`)
+  }
+
   const handleCreate = () => {
     setEditingPatient(undefined)
     setIsModalOpen(true)
@@ -250,6 +254,7 @@ export default function PatientsPage() {
           onEdit={handleEditPatient}
           onDelete={handleDeletePatient}
           onCreate={handleCreate}
+          onViewHistory={handleViewHistory}
           isLoading={loading}
         />
       </main>

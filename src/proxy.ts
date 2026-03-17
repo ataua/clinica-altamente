@@ -16,9 +16,10 @@ const validPaths = [
   '/api/users',
   '/api/patients',
   '/api/appointments',
+  '/api/attendances',
 ]
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (pathname === '/api-docs/json') {
