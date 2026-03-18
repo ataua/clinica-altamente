@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'bun:test'
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
 import { userService } from '@/services/user.service'
 import { prisma } from '@/lib/prisma'
-import { hashPassword } from '@/lib/bcrypt'
 
 const testUser = {
   name: 'Test User',

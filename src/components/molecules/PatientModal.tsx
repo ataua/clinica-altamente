@@ -138,7 +138,6 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
     setResponsibleRelationship('')
   }
 
-  // eslint-disable-next-line
   useEffect(() => {
     if (initialData) {
       setName(initialData.name || '')

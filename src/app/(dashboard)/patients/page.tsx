@@ -37,7 +37,7 @@ interface Pagination {
 }
 
 export default function PatientsPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   
   const [patients, setPatients] = useState<Patient[]>([])

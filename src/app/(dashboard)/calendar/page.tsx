@@ -39,7 +39,7 @@ interface Appointment {
 }
 
 export default function CalendarPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
 
   const [appointments, setAppointments] = useState<Appointment[]>([])

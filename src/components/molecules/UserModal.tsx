@@ -35,7 +35,6 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading }:
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [initialized, setInitialized] = useState(false)
 
-  // eslint-disable-next-line
   useEffect(() => {
     if (!initialized) {
       setInitialized(true)
@@ -53,7 +52,6 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading }:
     }
   }, [initialized, initialData])
 
-  // eslint-disable-next-line
   useEffect(() => {
     if (isOpen) {
       setInitialized(false)

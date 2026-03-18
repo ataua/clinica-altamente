@@ -4,7 +4,6 @@ import { hashPassword } from '@/lib/bcrypt'
 
 describe('Professional', () => {
   let userId: string
-  let professionalId: string
 
   beforeEach(async () => {
     const password = await hashPassword('testpassword123')
@@ -43,7 +42,6 @@ describe('Professional', () => {
     expect(professional.specialty).toBe('Psicologia')
     expect(professional.licenseNumber).toBe('CRP-12345')
     expect(professional.isActive).toBe(true)
-    professionalId = professional.id
   })
 
   it('should read a professional', async () => {

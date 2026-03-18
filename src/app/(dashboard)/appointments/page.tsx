@@ -39,7 +39,7 @@ const statusOptions = [
 ]
 
 export default function AppointmentsPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -161,7 +161,7 @@ export default function AppointmentsPage() {
       } else {
         toast.error('Erro ao confirmar agendamento')
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao confirmar agendamento')
     }
   }
@@ -180,7 +180,7 @@ export default function AppointmentsPage() {
       } else {
         toast.error('Erro ao iniciar atendimento')
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao iniciar atendimento')
     }
   }
@@ -199,7 +199,7 @@ export default function AppointmentsPage() {
       } else {
         toast.error('Erro ao concluir atendimento')
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao concluir atendimento')
     }
   }
@@ -218,7 +218,7 @@ export default function AppointmentsPage() {
       } else {
         toast.error('Erro ao registrar ausência')
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao registrar ausência')
     }
   }

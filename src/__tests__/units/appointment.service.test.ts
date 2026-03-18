@@ -1,11 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
 import { appointmentService } from '@/services/appointment.service'
-import { patientService } from '@/services/patient.service'
 import { prisma } from '@/lib/prisma'
 
 describe('AppointmentService', () => {
-  let testUserId: string
-  let testProfessionalUserId: string
   let testProfessionalId: string
   let testAppointmentTypeId: string
   let testPatientId: string
@@ -23,7 +20,6 @@ describe('AppointmentService', () => {
         role: 'PROFESSIONAL',
       },
     })
-    testProfessionalUserId = user.id
 
     const professional = await prisma.professional.create({
       data: {
@@ -77,7 +73,6 @@ describe('AppointmentService', () => {
         role: 'PATIENT',
       },
     })
-    testUserId = user.id
 
     const patient = await prisma.patient.create({
       data: {

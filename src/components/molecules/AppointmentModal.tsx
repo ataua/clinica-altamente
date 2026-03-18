@@ -87,7 +87,6 @@ export function AppointmentModal({
   const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    // eslint-disable-next-line
     if (!initialized) {
       setInitialized(true)
       if (initialData) {
@@ -108,7 +107,6 @@ export function AppointmentModal({
   }, [initialized, initialData, selectedSlot])
 
   useEffect(() => {
-    // eslint-disable-next-line
     if (isOpen) {
       setInitialized(false)
     }

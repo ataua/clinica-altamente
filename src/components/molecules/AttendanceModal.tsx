@@ -63,7 +63,6 @@ export function AttendanceModal({
 
   const [formData, setFormData] = useState<AttendanceFormData>(initialFormData)
 
-  // eslint-disable-next-line
   useEffect(() => {
     if (initialData) {
       setFormData({

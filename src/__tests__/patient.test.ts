@@ -4,7 +4,6 @@ import { hashPassword } from '@/lib/bcrypt'
 
 describe('Patient', () => {
   let userId: string
-  let patientId: string
 
   beforeEach(async () => {
     const password = await hashPassword('testpassword123')
@@ -44,7 +43,6 @@ describe('Patient', () => {
     expect(patient.dateOfBirth).toEqual(new Date('2010-01-01'))
     expect(patient.gender).toBe('M')
     expect(patient.isActive).toBe(true)
-    patientId = patient.id
   })
 
   it('should read a patient', async () => {

@@ -44,7 +44,7 @@ export default function LoginPage() {
         toast.success("Login realizado com sucesso!");
         router.push("/");
       }
-    } catch (err) {
+    } catch {
       setError("Ocorreu um erro ao fazer login");
       toast.error("Erro ao fazer login", {
         description: "Tente novamente mais tarde",
