@@ -17,7 +17,6 @@ interface UserModalProps {
   }
   isLoading?: boolean
   errors?: Record<string, string>
-  onClearErrors?: () => void
 }
 
 const roleOptions = [
@@ -30,7 +29,7 @@ const roleOptions = [
   { value: 'ADMIN', label: 'Administrador' },
 ]
 
-export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading, errors: externalErrors = {}, onClearErrors }: UserModalProps) {
+export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading, errors: externalErrors = {} }: UserModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -41,6 +40,8 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading, e
   const errors = { ...localErrors, ...externalErrors }
 
   useEffect(() => {
+    if (!isOpen) return
+    
     if (!initialized) {
       setInitialized(true)
       if (initialData) {
@@ -54,9 +55,8 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading, e
         setRole('PATIENT')
       }
       setLocalErrors({})
-      onClearErrors?.()
     }
-  }, [initialized, initialData, onClearErrors])
+  }, [isOpen, initialized, initialData])
 
   useEffect(() => {
     if (isOpen) {

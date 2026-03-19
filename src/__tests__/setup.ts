@@ -1,32 +1,30 @@
-import { beforeAll, afterAll } from 'bun:test'
+import { beforeAll, afterAll, beforeEach } from 'bun:test'
 import { prisma } from '@/lib/prisma'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: typeof prisma | undefined
-}
-
-export const testPrisma = globalForPrisma.prisma ?? prisma
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = testPrisma
+export { prisma }
 
 beforeAll(async () => {
-  await testPrisma.$connect()
+  await prisma.$connect()
 })
 
 afterAll(async () => {
-  await testPrisma.$disconnect()
+  await prisma.$disconnect()
+})
+
+beforeEach(async () => {
+  await cleanupDatabase()
 })
 
 export async function cleanupDatabase() {
-  await testPrisma.appointment.deleteMany()
-  await testPrisma.attendance.deleteMany()
-  await testPrisma.patient.deleteMany()
-  await testPrisma.professional.deleteMany()
-  await testPrisma.professionalSchedule.deleteMany()
-  await testPrisma.appointmentType.deleteMany()
-  await testPrisma.responsibleContact.deleteMany()
-  await testPrisma.responsible.deleteMany()
-  await testPrisma.user.deleteMany()
+  await prisma.appointment.deleteMany()
+  await prisma.attendance.deleteMany()
+  await prisma.patient.deleteMany()
+  await prisma.professional.deleteMany()
+  await prisma.professionalSchedule.deleteMany()
+  await prisma.appointmentType.deleteMany()
+  await prisma.responsibleContact.deleteMany()
+  await prisma.responsible.deleteMany()
+  await prisma.user.deleteMany()
 }
 
 export function uniqueEmail() {

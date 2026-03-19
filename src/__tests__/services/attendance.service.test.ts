@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
 import { attendanceService } from '@/services/attendance.service'
-import { testPrisma, cleanupDatabase, uniqueEmail } from '../setup'
+import { prisma, cleanupDatabase, uniqueEmail } from '../setup'
 
 describe('AttendanceService', () => {
   let testPatientId: string
@@ -9,9 +9,9 @@ describe('AttendanceService', () => {
   let testAppointmentId: string
 
   beforeAll(async () => {
-    await testPrisma.$connect()
+    await prisma.$connect()
 
-    const patientUser = await testPrisma.user.create({
+    const patientUser = await prisma.user.create({
       data: {
         name: 'Patient',
         email: uniqueEmail(),
@@ -19,12 +19,12 @@ describe('AttendanceService', () => {
         role: 'PATIENT',
       },
     })
-    const patient = await testPrisma.patient.create({
+    const patient = await prisma.patient.create({
       data: { userId: patientUser.id },
     })
     testPatientId = patient.id
 
-    const profUser = await testPrisma.user.create({
+    const profUser = await prisma.user.create({
       data: {
         name: 'Professional',
         email: uniqueEmail(),
@@ -32,17 +32,17 @@ describe('AttendanceService', () => {
         role: 'PROFESSIONAL',
       },
     })
-    const professional = await testPrisma.professional.create({
+    const professional = await prisma.professional.create({
       data: { userId: profUser.id, specialty: 'Psicologia' },
     })
     testProfessionalId = professional.id
 
-    const aptType = await testPrisma.appointmentType.create({
+    const aptType = await prisma.appointmentType.create({
       data: { name: 'Avaliação', durationMinutes: 60, isActive: true },
     })
     testAppointmentTypeId = aptType.id
 
-    const appointment = await testPrisma.appointment.create({
+    const appointment = await prisma.appointment.create({
       data: {
         patientId: testPatientId,
         professionalId: testProfessionalId,
@@ -57,11 +57,10 @@ describe('AttendanceService', () => {
 
   afterAll(async () => {
     await cleanupDatabase()
-    await testPrisma.$disconnect()
   })
 
   beforeEach(async () => {
-    await testPrisma.attendance.deleteMany()
+    await prisma.attendance.deleteMany()
   })
 
   describe('create', () => {

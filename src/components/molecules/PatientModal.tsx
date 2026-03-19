@@ -66,7 +66,6 @@ interface PatientModalProps {
   responsibles: ResponsibleContact[]
   isLoading?: boolean
   errors?: Record<string, string>
-  onClearErrors?: () => void
 }
 
 const genderOptions = [
@@ -86,7 +85,7 @@ const relationshipOptions = [
   { value: 'Outro', label: 'Outro' },
 ]
 
-export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsibles, isLoading, errors: externalErrors = {}, onClearErrors }: PatientModalProps) {
+export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsibles, isLoading, errors: externalErrors = {} }: PatientModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -116,32 +115,9 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({})
   const errors = { ...localErrors, ...externalErrors }
 
-  const resetForm = () => {
-    setName('')
-    setEmail('')
-    setPhone('')
-    setCpf('')
-    setDateOfBirth('')
-    setGender('')
-    setNotes('')
-    setStreet('')
-    setNumber('')
-    setComplement('')
-    setNeighborhood('')
-    setCity('')
-    setState('')
-    setZipCode('')
-    setHasResponsible(false)
-    setSelectedResponsibleId('')
-    setCreateNewResponsible(false)
-    setResponsibleName('')
-    setResponsibleEmail('')
-    setResponsiblePhone('')
-    setResponsibleCpf('')
-    setResponsibleRelationship('')
-  }
-
   useEffect(() => {
+    if (!isOpen) return
+    
     if (initialData) {
       setName(initialData.name || '')
       setEmail(initialData.email || '')
@@ -164,13 +140,36 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
       if (initialData.responsibleContact) {
         setHasResponsible(true)
         setSelectedResponsibleId(initialData.responsibleContact.id)
+      } else {
+        setHasResponsible(false)
+        setSelectedResponsibleId('')
       }
     } else {
-      resetForm()
+      setName('')
+      setEmail('')
+      setPhone('')
+      setCpf('')
+      setDateOfBirth('')
+      setGender('')
+      setNotes('')
+      setStreet('')
+      setNumber('')
+      setComplement('')
+      setNeighborhood('')
+      setCity('')
+      setState('')
+      setZipCode('')
+      setHasResponsible(false)
+      setSelectedResponsibleId('')
+      setCreateNewResponsible(false)
+      setResponsibleName('')
+      setResponsibleEmail('')
+      setResponsiblePhone('')
+      setResponsibleCpf('')
+      setResponsibleRelationship('')
     }
     setLocalErrors({})
-    onClearErrors?.()
-  }, [initialData, isOpen, onClearErrors])
+  }, [initialData, isOpen])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -282,14 +281,15 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl mx-4 my-8 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-          {initialData ? 'Editar Paciente' : 'Cadastrar Novo Paciente'}
-        </h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl mx-4 my-8 overflow-y-auto max-h-[calc(100vh-4rem)]">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 sticky top-0 bg-white dark:bg-gray-800 z-10">
+            {initialData ? 'Editar Paciente' : 'Cadastrar Novo Paciente'}
+          </h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               id="name"
@@ -524,6 +524,7 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
             </Button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   )

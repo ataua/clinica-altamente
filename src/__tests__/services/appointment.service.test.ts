@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
 import { appointmentService } from '@/services/appointment.service'
-import { prisma } from '@/lib/prisma'
-import { testPrisma, cleanupDatabase, uniqueEmail } from '../setup'
+import { prisma, cleanupDatabase, uniqueEmail } from '../setup'
 
 describe('AppointmentService', () => {
   let testProfessionalId: string
@@ -9,7 +8,7 @@ describe('AppointmentService', () => {
   let testPatientId: string
 
   beforeAll(async () => {
-    await testPrisma.$connect()
+    await prisma.$connect()
 
     const user = await prisma.user.create({
       data: {
@@ -52,12 +51,11 @@ describe('AppointmentService', () => {
 
   afterAll(async () => {
     await cleanupDatabase()
-    await testPrisma.$disconnect()
   })
 
   beforeEach(async () => {
-    await testPrisma.appointment.deleteMany()
-    await testPrisma.patient.deleteMany()
+    await prisma.appointment.deleteMany()
+    await prisma.patient.deleteMany()
 
     const user = await prisma.user.create({
       data: {

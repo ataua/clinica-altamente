@@ -278,7 +278,6 @@ export default function PatientsPage() {
         responsibles={responsibles}
         isLoading={submitting}
         errors={formErrors}
-        onClearErrors={() => setFormErrors({})}
       />
     </div>
   )

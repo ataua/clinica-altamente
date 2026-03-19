@@ -281,7 +281,6 @@ export default function UsersPage() {
         initialData={editingUser}
         isLoading={submitting}
         errors={formErrors}
-        onClearErrors={() => setFormErrors({})}
       />
     </div>
   )

@@ -1,17 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
+import { describe, it, expect, beforeEach } from 'bun:test'
 import { userService } from '@/services/user.service'
-import { prisma } from '@/lib/prisma'
-import { testPrisma, cleanupDatabase, uniqueEmail } from '../setup'
+import { prisma, cleanupDatabase, uniqueEmail } from '../setup'
 
 describe('UserService', () => {
-  beforeAll(async () => {
-    await testPrisma.$connect()
-  })
-
-  afterAll(async () => {
-    await testPrisma.$disconnect()
-  })
-
   beforeEach(async () => {
     await cleanupDatabase()
   })
