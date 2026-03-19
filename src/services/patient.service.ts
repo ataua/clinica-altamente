@@ -44,8 +44,19 @@ export class PatientService {
         const responsibleContact = await prisma.responsibleContact.findFirst({
           where: { phone: patient.emergencyPhone || '' },
         })
+        let parsedAddress = null
+        if (patient.address) {
+          try {
+            parsedAddress = typeof patient.address === 'string' 
+              ? JSON.parse(patient.address) 
+              : patient.address
+          } catch {
+            parsedAddress = null
+          }
+        }
         return {
           ...patient,
+          address: parsedAddress,
           name: patient.user?.name,
           email: patient.user?.email,
           responsibleContact: responsibleContact ? {
@@ -53,6 +64,7 @@ export class PatientService {
             name: responsibleContact.name,
             email: responsibleContact.email,
             phone: responsibleContact.phone,
+            cpf: responsibleContact.cpf,
             relationship: responsibleContact.relationship,
           } : null,
         }
@@ -86,8 +98,20 @@ export class PatientService {
         })
       : null
 
+    let parsedAddress = null
+    if (patient.address) {
+      try {
+        parsedAddress = typeof patient.address === 'string' 
+          ? JSON.parse(patient.address) 
+          : patient.address
+      } catch {
+        parsedAddress = null
+      }
+    }
+
     return {
       ...patient,
+      address: parsedAddress,
       name: patient.user?.name,
       email: patient.user?.email,
       responsibleContact: responsibleContact ? {
@@ -95,6 +119,7 @@ export class PatientService {
         name: responsibleContact.name,
         email: responsibleContact.email,
         phone: responsibleContact.phone,
+        cpf: responsibleContact.cpf,
         relationship: responsibleContact.relationship,
       } : null,
     }
