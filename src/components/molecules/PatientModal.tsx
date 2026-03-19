@@ -140,9 +140,21 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
       if (initialData.responsibleContact) {
         setHasResponsible(true)
         setSelectedResponsibleId(initialData.responsibleContact.id)
+        setCreateNewResponsible(false)
+        setResponsibleName(initialData.responsibleContact.name || '')
+        setResponsibleEmail(initialData.responsibleContact.email || '')
+        setResponsiblePhone(initialData.responsibleContact.phone || '')
+        setResponsibleCpf(initialData.responsibleContact.cpf || '')
+        setResponsibleRelationship(initialData.responsibleContact.relationship || '')
       } else {
         setHasResponsible(false)
         setSelectedResponsibleId('')
+        setCreateNewResponsible(false)
+        setResponsibleName('')
+        setResponsibleEmail('')
+        setResponsiblePhone('')
+        setResponsibleCpf('')
+        setResponsibleRelationship('')
       }
     } else {
       setName('')

@@ -58,7 +58,7 @@ export const CreateResponsibleDTO = z.object({
 })
 
 export const PatientParamsDTO = z.object({
-  id: z.string().uuid('ID inválido'),
+  id: z.string().cuid('ID inválido'),
 })
 
 export const PatientQueryDTO = z.object({

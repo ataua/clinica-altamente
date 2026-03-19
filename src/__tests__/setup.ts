@@ -1,7 +1,27 @@
 import { beforeAll, afterAll, beforeEach } from 'bun:test'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
 
-export { prisma }
+const testDatabaseUrl = process.env.TEST_DATABASE_URL || 'postgresql://postgres:password@0.0.0.0:5433/clinica-altamente_test?schema=public'
+
+let testPool: Pool | null = null
+
+const globalForTestPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
+
+function createTestPrismaClient(): PrismaClient {
+  testPool = new Pool({ connectionString: testDatabaseUrl })
+  const adapter = new PrismaPg(testPool)
+  return new PrismaClient({ adapter })
+}
+
+export const prisma = globalForTestPrisma.prisma ?? createTestPrismaClient()
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForTestPrisma.prisma = prisma
+}
 
 beforeAll(async () => {
   await prisma.$connect()
@@ -9,6 +29,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.$disconnect()
+  if (testPool) {
+    await testPool.end()
+  }
 })
 
 beforeEach(async () => {

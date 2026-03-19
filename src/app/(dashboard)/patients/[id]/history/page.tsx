@@ -82,9 +82,9 @@ export default function PatientHistoryPage() {
       const appointmentsData = await appointmentsRes.json()
       const attendancesData = await attendancesRes.json()
 
-      if (patientRes.ok) setPatient(patientData)
-      if (appointmentsRes.ok) setAppointments(appointmentsData.appointments || [])
-      if (attendancesRes.ok) setAttendances(attendancesData.attendances || [])
+      if (patientRes.ok) setPatient(patientData.data || patientData)
+      if (appointmentsRes.ok) setAppointments(appointmentsData.data || [])
+      if (attendancesRes.ok) setAttendances(attendancesData.data || [])
     } catch (error) {
       console.error('Error fetching data:', error)
       toast.error('Erro ao carregar dados')
@@ -188,10 +188,15 @@ export default function PatientHistoryPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Histórico do Paciente
               </h1>
-              {patient && (
+              {loading ? (
+                <p className="text-sm text-gray-500">Carregando...</p>
+              ) : patient ? (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {patient.user.name} - {patient.user.email}
+                  <span className="font-medium">{patient.user?.name || 'Nome não disponível'}</span>
+                  {patient.user?.email && ` - ${patient.user.email}`}
                 </p>
+              ) : (
+                <p className="text-sm text-red-500">Paciente não encontrado</p>
               )}
             </div>
             <Button variant="outline" onClick={() => router.push('/patients')}>
