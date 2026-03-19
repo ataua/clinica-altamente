@@ -347,6 +347,49 @@ export class AppointmentService {
 
     return { slots }
   }
+
+  async createType(data: {
+    name: string
+    description?: string
+    durationMinutes?: number
+  }) {
+    return prisma.appointmentType.create({
+      data: {
+        name: data.name,
+        description: data.description || null,
+        durationMinutes: data.durationMinutes || 60,
+      },
+    })
+  }
+
+  async updateType(id: string, data: {
+    name?: string
+    description?: string
+    durationMinutes?: number
+    isActive?: boolean
+  }) {
+    return prisma.appointmentType.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.durationMinutes !== undefined && { durationMinutes: data.durationMinutes }),
+        ...(data.isActive !== undefined && { isActive: data.isActive }),
+      },
+    })
+  }
+
+  async deleteType(id: string) {
+    return prisma.appointmentType.delete({
+      where: { id },
+    })
+  }
+
+  async getAllTypes() {
+    return prisma.appointmentType.findMany({
+      orderBy: { name: 'asc' },
+    })
+  }
 }
 
 export const appointmentService = new AppointmentService()

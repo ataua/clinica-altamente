@@ -75,7 +75,10 @@ src/
 ├── app/                         # Páginas e API routes (App Router)
 │   ├── (auth)/                  # Grupo de rotas de autenticação
 │   ├── (dashboard)/             # Grupo de rotas do painel
-│   │   ├── admin/users/        # Gerenciamento de usuários
+│   │   ├── admin/
+│   │   │   ├── users/          # Gerenciamento de usuários
+│   │   │   ├── professionals/  # Gerenciamento de profissionais
+│   │   │   └── appointment-types/ # Tipos de agendamento
 │   │   ├── patients/           # Pacientes e histórico
 │   │   ├── appointments/      # Agendamentos
 │   │   └── calendar/          # Calendário
@@ -83,6 +86,8 @@ src/
 │       ├── auth/               # Autenticação
 │       ├── users/              # CRUD de usuários
 │       ├── patients/           # CRUD de pacientes
+│       ├── professionals/      # CRUD de profissionais
+│       ├── appointment-types/  # CRUD de tipos de agendamento
 │       ├── appointments/       # Agendamentos
 │       ├── attendances/        # Atendimentos
 │       └── responsibles/       # Responsáveis
@@ -139,6 +144,10 @@ A API segue o **Richardson Maturity Model nível 3** com **HATEOAS** (Hypermedia
 | `/api/users/:id` | Detalhes | - | Atualizar | Excluir |
 | `/api/patients` | Listar | Criar | - | - |
 | `/api/patients/:id` | Detalhes | - | Atualizar | Excluir |
+| `/api/professionals` | Listar | Criar | - | - |
+| `/api/professionals/:id` | Detalhes | - | Atualizar | Excluir |
+| `/api/appointment-types` | Listar | Criar | - | - |
+| `/api/appointment-types/:id` | - | - | Atualizar | Excluir |
 | `/api/appointments` | Listar | Criar | - | - |
 | `/api/appointments/:id` | Detalhes | - | Atualizar | Excluir |
 | `/api/appointments/:id/cancel` | - | Cancelar | - | - |
@@ -147,6 +156,7 @@ A API segue o **Richardson Maturity Model nível 3** com **HATEOAS** (Hypermedia
 | `/api/attendances/:id/start` | - | Iniciar | - | - |
 | `/api/attendances/:id/complete` | - | Finalizar | - | - |
 | `/api/responsibles` | Listar | Criar | - | - |
+| `/api/responsibles/:id` | - | - | Atualizar | - |
 
 ## Autenticação
 
