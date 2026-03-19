@@ -5,13 +5,22 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
+import { Select } from '@/components/atoms/Select'
 import { toast } from '@/components/ui/toast'
+
+interface Specialty {
+  id: string
+  name: string
+  isActive?: boolean
+}
 
 interface AppointmentType {
   id: string
   name: string
   description: string | null
   durationMinutes: number
+  specialtyId: string | null
+  specialty: Specialty | null
   isActive: boolean
 }
 
@@ -19,6 +28,7 @@ export default function AppointmentTypesPage() {
   const { status, data: session } = useSession()
   const router = useRouter()
   const [types, setTypes] = useState<AppointmentType[]>([])
+  const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingType, setEditingType] = useState<AppointmentType | null>(null)
@@ -27,6 +37,7 @@ export default function AppointmentTypesPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [durationMinutes, setDurationMinutes] = useState('60')
+  const [specialtyId, setSpecialtyId] = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -51,9 +62,22 @@ export default function AppointmentTypesPage() {
     }
   }
 
+  const fetchSpecialties = async () => {
+    try {
+      const res = await fetch('/api/specialties?limit=100')
+      const data = await res.json()
+      if (res.ok) {
+        setSpecialties((data.data || []).filter((s: Specialty) => s.isActive !== false))
+      }
+    } catch (error) {
+      console.error('Error fetching specialties:', error)
+    }
+  }
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchTypes()
+      fetchSpecialties()
     }
   }, [status])
 
@@ -63,11 +87,13 @@ export default function AppointmentTypesPage() {
       setName(type.name)
       setDescription(type.description || '')
       setDurationMinutes(type.durationMinutes.toString())
+      setSpecialtyId(type.specialtyId || '')
     } else {
       setEditingType(null)
       setName('')
       setDescription('')
       setDurationMinutes('60')
+      setSpecialtyId('')
     }
     setIsModalOpen(true)
   }
@@ -99,6 +125,7 @@ export default function AppointmentTypesPage() {
           name,
           description: description || undefined,
           durationMinutes: parseInt(durationMinutes) || 60,
+          specialtyId: specialtyId || undefined,
         }),
       })
 
@@ -188,6 +215,9 @@ export default function AppointmentTypesPage() {
                   Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  Especialidade
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Descrição
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
@@ -204,7 +234,7 @@ export default function AppointmentTypesPage() {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {types.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     Nenhum tipo de agendamento cadastrado
                   </td>
                 </tr>
@@ -214,6 +244,11 @@ export default function AppointmentTypesPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-medium text-gray-900 dark:text-white">
                         {type.name}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        {type.specialty?.name || '-'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -278,6 +313,17 @@ export default function AppointmentTypesPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Avaliação Inicial"
+              />
+
+              <Select
+                id="specialty"
+                label="Especialidade"
+                value={specialtyId}
+                onChange={(e) => setSpecialtyId(e.target.value)}
+                options={[
+                  { value: '', label: 'Selecione (opcional)' },
+                  ...specialties.map(s => ({ value: s.id, label: s.name }))
+                ]}
               />
 
               <div>

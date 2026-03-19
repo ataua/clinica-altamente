@@ -13,15 +13,22 @@ interface Patient {
   name: string
 }
 
+interface Specialty {
+  id: string
+  name: string
+}
+
 interface Professional {
   id: string
   name: string
+  specialtyId?: string | null
 }
 
 interface AppointmentType {
   id: string
   name: string
   durationMinutes: number
+  specialtyId?: string | null
 }
 
 interface Appointment {
@@ -44,6 +51,7 @@ export default function CalendarPage() {
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
+  const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,17 +73,19 @@ export default function CalendarPage() {
       params.set('endDate', endOfMonth.toISOString())
       params.set('limit', '100')
 
-      const [appointmentsRes, patientsRes, professionalsRes, typesRes] = await Promise.all([
+      const [appointmentsRes, patientsRes, professionalsRes, typesRes, specialtiesRes] = await Promise.all([
         fetch(`/api/appointments?${params}`),
         fetch('/api/patients?limit=100'),
         fetch('/api/appointments/professionals'),
         fetch('/api/appointments/types'),
+        fetch('/api/specialties?isActive=true'),
       ])
 
       const appointmentsData = await appointmentsRes.json()
       const patientsData = await patientsRes.json()
       const professionalsData = await professionalsRes.json()
       const typesData = await typesRes.json()
+      const specialtiesData = await specialtiesRes.json()
 
       if (appointmentsRes.ok) {
         setAppointments(appointmentsData.data || [])
@@ -84,15 +94,28 @@ export default function CalendarPage() {
         const patientsList = patientsData.data?.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })) || []
         setPatients(patientsList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
       }
+      if (specialtiesRes.ok) {
+        const specialtiesList = (specialtiesData.data || []).map((s: { id: string; name: string }) => ({
+          id: s.id,
+          name: s.name
+        }))
+        setSpecialties(specialtiesList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
+      }
       if (professionalsRes.ok) {
-        const professionalsList = (professionalsData.data || []).map((p: { id: string; user: { name: string } }) => ({
+        const professionalsList = (professionalsData.data || []).map((p: { id: string; user: { name: string }; specialtyId?: string | null }) => ({
           id: p.id,
-          name: p.user.name
+          name: p.user.name,
+          specialtyId: p.specialtyId
         }))
         setProfessionals(professionalsList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
       }
       if (typesRes.ok) {
-        const typesList = typesData.data || []
+        const typesList = (typesData.data || []).map((t: { id: string; name: string; durationMinutes: number; specialtyId?: string | null }) => ({
+          id: t.id,
+          name: t.name,
+          durationMinutes: t.durationMinutes,
+          specialtyId: t.specialtyId
+        }))
         setAppointmentTypes(typesList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
       }
     } catch (error) {
@@ -291,6 +314,7 @@ export default function CalendarPage() {
         patients={patients}
         professionals={professionals}
         appointmentTypes={appointmentTypes}
+        specialties={specialties}
         selectedSlot={selectedDate?.toISOString()}
         isLoading={submitting}
       />

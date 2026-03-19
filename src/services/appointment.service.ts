@@ -277,17 +277,38 @@ export class AppointmentService {
     return prisma.appointment.delete( { where: { id } } )
   }
 
-  async getAppointmentTypes () {
+  async getAppointmentTypes (specialtyId?: string) {
     return prisma.appointmentType.findMany( {
-      where: { isActive: true },
+      where: { 
+        isActive: true,
+        ...(specialtyId && { specialtyId }),
+      },
+      include: {
+        specialty: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
       orderBy: { name: 'asc' },
     } )
   }
 
-  async getProfessionals () {
+  async getProfessionals (specialtyId?: string) {
     return prisma.professional.findMany( {
+      where: {
+        isActive: true,
+        ...(specialtyId && { specialtyId }),
+      },
       include: {
         user: { select: { name: true } },
+        specialty: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     } )
   }
@@ -352,12 +373,14 @@ export class AppointmentService {
     name: string
     description?: string
     durationMinutes?: number
+    specialtyId?: string
   }) {
     return prisma.appointmentType.create({
       data: {
         name: data.name,
         description: data.description || null,
         durationMinutes: data.durationMinutes || 60,
+        specialtyId: data.specialtyId || null,
       },
     })
   }
@@ -366,6 +389,7 @@ export class AppointmentService {
     name?: string
     description?: string
     durationMinutes?: number
+    specialtyId?: string
     isActive?: boolean
   }) {
     return prisma.appointmentType.update({
@@ -374,6 +398,7 @@ export class AppointmentService {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.durationMinutes !== undefined && { durationMinutes: data.durationMinutes }),
+        ...(data.specialtyId !== undefined && { specialtyId: data.specialtyId }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
       },
     })

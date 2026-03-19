@@ -6,8 +6,9 @@ export class ProfessionalService {
     limit?: number
     search?: string
     isActive?: boolean
+    specialtyId?: string
   }) {
-    const { page = 1, limit = 10, search, isActive } = params
+    const { page = 1, limit = 10, search, isActive, specialtyId } = params
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {}
@@ -16,11 +17,15 @@ export class ProfessionalService {
       where.isActive = isActive
     }
     
+    if (specialtyId) {
+      where.specialtyId = specialtyId
+    }
+    
     if (search) {
       where.OR = [
         { user: { name: { contains: search, mode: 'insensitive' } } },
         { user: { email: { contains: search, mode: 'insensitive' } } },
-        { specialty: { contains: search, mode: 'insensitive' } },
+        { specialty: { name: { contains: search, mode: 'insensitive' } } },
       ]
     }
 
@@ -39,6 +44,12 @@ export class ProfessionalService {
               role: true,
             },
           },
+          specialty: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       }),
       prisma.professional.count({ where }),
@@ -50,7 +61,7 @@ export class ProfessionalService {
         userId: p.userId,
         name: p.user.name,
         email: p.user.email,
-        specialty: p.specialty,
+        specialty: p.specialty ? { id: p.specialty.id, name: p.specialty.name } : null,
         licenseNumber: p.licenseNumber,
         bio: p.bio,
         isActive: p.isActive,
@@ -76,6 +87,12 @@ export class ProfessionalService {
             role: true,
           },
         },
+        specialty: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         professionalSchedules: {
           where: { isActive: true },
         },
@@ -89,7 +106,7 @@ export class ProfessionalService {
       userId: professional.userId,
       name: professional.user.name,
       email: professional.user.email,
-      specialty: professional.specialty,
+      specialty: professional.specialty ? { id: professional.specialty.id, name: professional.specialty.name } : null,
       licenseNumber: professional.licenseNumber,
       bio: professional.bio,
       isActive: professional.isActive,
@@ -109,20 +126,26 @@ export class ProfessionalService {
             role: true,
           },
         },
+        specialty: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     })
   }
 
   async create(data: {
     userId: string
-    specialty: string
+    specialtyId?: string
     licenseNumber?: string
     bio?: string
   }) {
     return prisma.professional.create({
       data: {
         userId: data.userId,
-        specialty: data.specialty,
+        specialtyId: data.specialtyId || null,
         licenseNumber: data.licenseNumber || null,
         bio: data.bio || null,
       },
@@ -134,12 +157,18 @@ export class ProfessionalService {
             email: true,
           },
         },
+        specialty: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     })
   }
 
   async update(id: string, data: {
-    specialty?: string
+    specialtyId?: string
     licenseNumber?: string
     bio?: string
     isActive?: boolean
@@ -147,10 +176,18 @@ export class ProfessionalService {
     return prisma.professional.update({
       where: { id },
       data: {
-        ...(data.specialty !== undefined && { specialty: data.specialty }),
+        ...(data.specialtyId !== undefined && { specialtyId: data.specialtyId }),
         ...(data.licenseNumber !== undefined && { licenseNumber: data.licenseNumber }),
         ...(data.bio !== undefined && { bio: data.bio }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
+      },
+      include: {
+        specialty: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     })
   }

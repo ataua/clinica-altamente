@@ -8,12 +8,18 @@ import { Input } from '@/components/atoms/Input'
 import { Select } from '@/components/atoms/Select'
 import { toast } from '@/components/ui/toast'
 
+interface Specialty {
+  id: string
+  name: string
+  isActive?: boolean
+}
+
 interface Professional {
   id: string
   userId: string
   name: string
   email: string
-  specialty: string
+  specialty: Specialty | null
   licenseNumber: string | null
   bio: string | null
   isActive: boolean
@@ -37,7 +43,8 @@ export default function ProfessionalsPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const [userId, setUserId] = useState('')
-  const [specialty, setSpecialty] = useState('')
+  const [specialtyId, setSpecialtyId] = useState('')
+  const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [licenseNumber, setLicenseNumber] = useState('')
   const [bio, setBio] = useState('')
 
@@ -79,9 +86,22 @@ export default function ProfessionalsPage() {
     }
   }, [professionals])
 
+  const fetchSpecialties = async () => {
+    try {
+      const res = await fetch('/api/specialties?limit=100')
+      const data = await res.json()
+      if (res.ok) {
+        setSpecialties((data.data || []).filter((s: Specialty) => s.isActive !== false))
+      }
+    } catch (error) {
+      console.error('Error fetching specialties:', error)
+    }
+  }
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchProfessionals()
+      fetchSpecialties()
     }
   }, [status])
 
@@ -95,13 +115,13 @@ export default function ProfessionalsPage() {
     if (professional) {
       setEditingProfessional(professional)
       setUserId('')
-      setSpecialty(professional.specialty)
+      setSpecialtyId(professional.specialty?.id || '')
       setLicenseNumber(professional.licenseNumber || '')
       setBio(professional.bio || '')
     } else {
       setEditingProfessional(null)
       setUserId('')
-      setSpecialty('')
+      setSpecialtyId('')
       setLicenseNumber('')
       setBio('')
     }
@@ -120,10 +140,6 @@ export default function ProfessionalsPage() {
       toast.error('Selecione um usuário')
       return
     }
-    if (!specialty || specialty.length < 2) {
-      toast.error('Especialidade é obrigatória')
-      return
-    }
 
     try {
       setSubmitting(true)
@@ -133,7 +149,7 @@ export default function ProfessionalsPage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            specialty,
+            specialtyId: specialtyId || undefined,
             licenseNumber: licenseNumber || undefined,
             bio: bio || undefined,
           }),
@@ -153,7 +169,7 @@ export default function ProfessionalsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId,
-            specialty,
+            specialtyId: specialtyId || undefined,
             licenseNumber: licenseNumber || undefined,
             bio: bio || undefined,
           }),
@@ -281,7 +297,7 @@ export default function ProfessionalsPage() {
                       {professional.email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">
-                      {professional.specialty}
+                      {professional.specialty?.name || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">
                       {professional.licenseNumber || '-'}
@@ -348,12 +364,15 @@ export default function ProfessionalsPage() {
                 />
               )}
 
-              <Input
+              <Select
                 id="specialty"
-                label="Especialidade *"
-                value={specialty}
-                onChange={(e) => setSpecialty(e.target.value)}
-                placeholder="Ex: Psicologia"
+                label="Especialidade"
+                value={specialtyId}
+                onChange={(e) => setSpecialtyId(e.target.value)}
+                options={[
+                  { value: '', label: 'Selecione (opcional)' },
+                  ...specialties.map(s => ({ value: s.id, label: s.name }))
+                ]}
               />
 
               <Input

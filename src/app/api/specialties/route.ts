@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import { professionalService } from '@/services/professional.service'
+import { specialtyService } from '@/services/specialty.service'
 import { created, error, paginated } from '@/lib/response'
 import { auth } from '@/lib/auth'
 
@@ -15,25 +15,23 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '100')
     const search = searchParams.get('search') || undefined
     const isActive = searchParams.get('isActive')
-    const specialtyId = searchParams.get('specialtyId') || undefined
 
-    const result = await professionalService.findAll({
+    const result = await specialtyService.findAll({
       page,
       limit,
       search,
       isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
-      specialtyId,
     })
 
     return paginated(
-      result.professionals,
+      result.specialties,
       {
         page: result.pagination.page,
         limit: result.pagination.limit,
         total: result.pagination.total,
       },
       request.nextUrl.origin,
-      '/professionals',
+      '/specialties',
       { search: search || '' }
     )
   } catch (err) {
@@ -53,20 +51,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { userId, specialtyId, licenseNumber, bio } = body
+    const { name, description } = body
 
-    if (!userId) {
-      return Response.json({ error: 'User ID é obrigatório' }, { status: 400 })
+    if (!name || name.length < 2) {
+      return Response.json({ error: 'Nome é obrigatório' }, { status: 400 })
     }
 
-    const result = await professionalService.create({
-      userId,
-      specialtyId: specialtyId || undefined,
-      licenseNumber,
-      bio,
+    const existing = await specialtyService.findByName(name)
+    if (existing) {
+      return Response.json({ error: 'Especialidade já existe' }, { status: 409 })
+    }
+
+    const result = await specialtyService.create({
+      name,
+      description,
     })
 
-    return created(result, 'Profissional criado')
+    return created(result, 'Especialidade criada')
   } catch (err) {
     return error(err)
   }

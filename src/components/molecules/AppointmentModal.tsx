@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Input } from '@/components/atoms/Input'
 import { Select } from '@/components/atoms/Select'
 import { Button } from '@/components/atoms/Button'
@@ -11,15 +11,22 @@ interface Patient {
   name: string
 }
 
+interface Specialty {
+  id: string
+  name: string
+}
+
 interface Professional {
   id: string
   name: string
+  specialtyId?: string | null
 }
 
 interface AppointmentType {
   id: string
   name: string
   durationMinutes: number
+  specialtyId?: string | null
 }
 
 interface Appointment {
@@ -52,6 +59,7 @@ interface AppointmentModalProps {
   patients: Patient[]
   professionals: Professional[]
   appointmentTypes: AppointmentType[]
+  specialties?: Specialty[]
   selectedSlot?: string
   isLoading?: boolean
 }
@@ -75,6 +83,7 @@ export function AppointmentModal({
   patients,
   professionals,
   appointmentTypes,
+  specialties = [],
   selectedSlot,
   isLoading,
 }: AppointmentModalProps) {
@@ -83,8 +92,19 @@ export function AppointmentModal({
   const [appointmentTypeId, setAppointmentTypeId] = useState('')
   const [scheduledDateTime, setScheduledDateTime] = useState('')
   const [notes, setNotes] = useState('')
+  const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [initialized, setInitialized] = useState(false)
+
+  const filteredProfessionals = useMemo(() => {
+    if (!selectedSpecialtyId) return professionals
+    return professionals.filter((p) => p.specialtyId === selectedSpecialtyId)
+  }, [professionals, selectedSpecialtyId])
+
+  const filteredAppointmentTypes = useMemo(() => {
+    if (!selectedSpecialtyId) return appointmentTypes
+    return appointmentTypes.filter((t) => t.specialtyId === selectedSpecialtyId)
+  }, [appointmentTypes, selectedSpecialtyId])
 
   useEffect(() => {
     if (!initialized) {
@@ -95,12 +115,14 @@ export function AppointmentModal({
         setAppointmentTypeId(initialData.appointmentTypeId)
         setScheduledDateTime(initialData.scheduledDateTime.slice(0, 16))
         setNotes(initialData.notes || '')
+        setSelectedSpecialtyId('')
       } else {
         setPatientId('')
         setProfessionalId('')
         setAppointmentTypeId('')
         setScheduledDateTime(selectedSlot ? selectedSlot.slice(0, 16) : '')
         setNotes('')
+        setSelectedSpecialtyId('')
       }
       setErrors({})
     }
@@ -178,14 +200,31 @@ export function AppointmentModal({
                 error={errors.patientId}
               />
 
+              {specialties.length > 0 && (
+                <Select
+                  id="specialty"
+                  label="Especialidade"
+                  value={selectedSpecialtyId}
+                  onChange={(e) => {
+                    setSelectedSpecialtyId(e.target.value)
+                    setProfessionalId('')
+                    setAppointmentTypeId('')
+                  }}
+                  options={[
+                    { value: '', label: 'Todas as especialidades' },
+                    ...specialties.map((s) => ({ value: s.id, label: s.name }))
+                  ]}
+                />
+              )}
+
               <Select
                 id="professional"
                 label="Profissional *"
                 value={professionalId}
                 onChange={(e) => setProfessionalId(e.target.value)}
                 options={[
-                  { value: '', label: 'Selecione...' },
-                  ...professionals.map((p) => ({ value: p.id, label: p.name }))
+                  { value: '', label: selectedSpecialtyId ? 'Selecione uma especialidade primeiro' : 'Selecione...' },
+                  ...filteredProfessionals.map((p) => ({ value: p.id, label: p.name }))
                 ]}
                 error={errors.professionalId}
               />
@@ -196,8 +235,8 @@ export function AppointmentModal({
                 value={appointmentTypeId}
                 onChange={(e) => setAppointmentTypeId(e.target.value)}
                 options={[
-                  { value: '', label: 'Selecione...' },
-                  ...appointmentTypes.map((t) => ({ value: t.id, label: `${t.name} (${t.durationMinutes} min)` }))
+                  { value: '', label: selectedSpecialtyId ? 'Selecione uma especialidade primeiro' : 'Selecione...' },
+                  ...filteredAppointmentTypes.map((t) => ({ value: t.id, label: `${t.name} (${t.durationMinutes} min)` }))
                 ]}
                 error={errors.appointmentTypeId}
               />

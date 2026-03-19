@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import { professionalService } from '@/services/professional.service'
+import { specialtyService } from '@/services/specialty.service'
 import { success, error, notFound } from '@/lib/response'
 import { auth } from '@/lib/auth'
 
@@ -11,10 +11,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const { id } = await params
-    const result = await professionalService.findById(id)
+    const result = await specialtyService.findById(id)
 
     if (!result) {
-      return notFound('Professional')
+      return notFound('Specialty')
     }
 
     return success(result)
@@ -36,21 +36,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id } = await params
     const body = await request.json()
-    const { specialtyId, licenseNumber, bio, isActive, schedules } = body
+    const { name, description, isActive } = body
 
-    if (schedules) {
-      const result = await professionalService.updateSchedule(id, schedules)
-      return success(result, { message: 'Agenda atualizada' })
+    const existing = await specialtyService.findById(id)
+    if (!existing) {
+      return notFound('Specialty')
     }
 
-    const result = await professionalService.update(id, {
-      ...(specialtyId !== undefined && { specialtyId }),
-      ...(licenseNumber !== undefined && { licenseNumber }),
-      ...(bio !== undefined && { bio }),
+    const result = await specialtyService.update(id, {
+      ...(name !== undefined && { name }),
+      ...(description !== undefined && { description }),
       ...(isActive !== undefined && { isActive }),
     })
 
-    return success(result, { message: 'Profissional atualizado' })
+    return success(result, { message: 'Especialidade atualizada' })
   } catch (err) {
     return error(err)
   }
@@ -68,9 +67,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const { id } = await params
-    await professionalService.delete(id)
+    await specialtyService.delete(id)
 
-    return success(null, { message: 'Profissional excluído' })
+    return success(null, { message: 'Especialidade excluída' })
   } catch (err) {
     return error(err)
   }
