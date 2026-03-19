@@ -34,7 +34,7 @@ describe('AttendanceService', () => {
       },
     })
     const professional = await prisma.professional.create({
-      data: { userId: profUser.id, specialty: 'Psicologia' },
+      data: { userId: profUser.id },
     })
     testProfessionalId = professional.id
 

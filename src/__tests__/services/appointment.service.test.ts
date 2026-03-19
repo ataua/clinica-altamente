@@ -11,6 +11,14 @@ describe('AppointmentService', () => {
   beforeAll(async () => {
     await prisma.$connect()
 
+    const specialty = await prisma.specialty.create({
+      data: {
+        name: 'Psicologia',
+        description: 'Test specialty',
+        isActive: true,
+      },
+    })
+
     const user = await prisma.user.create({
       data: {
         name: 'Professional Test',
@@ -23,7 +31,7 @@ describe('AppointmentService', () => {
     const professional = await prisma.professional.create({
       data: {
         userId: user.id,
-        specialty: 'Psicologia',
+        specialtyId: specialty.id,
         licenseNumber: '12345',
       },
     })
@@ -45,6 +53,7 @@ describe('AppointmentService', () => {
         description: 'Avaliação inicial',
         durationMinutes: 60,
         isActive: true,
+        specialtyId: specialty.id,
       },
     })
     testAppointmentTypeId = appointmentType.id
@@ -124,6 +133,8 @@ describe('AppointmentService', () => {
     })
 
     it('should allow overlapping for different professionals', async () => {
+      const specialty = await prisma.specialty.findFirst()
+
       const user2 = await prisma.user.create({
         data: {
           name: 'Professional 2',
@@ -136,7 +147,7 @@ describe('AppointmentService', () => {
       const professional2 = await prisma.professional.create({
         data: {
           userId: user2.id,
-          specialty: 'Psicologia',
+          specialtyId: specialty?.id,
           licenseNumber: '54321',
         },
       })

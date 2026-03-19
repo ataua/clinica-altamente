@@ -45,6 +45,7 @@ export async function cleanupDatabase() {
   await prisma.professional.deleteMany()
   await prisma.professionalSchedule.deleteMany()
   await prisma.appointmentType.deleteMany()
+  await prisma.specialty.deleteMany()
   await prisma.responsibleContact.deleteMany()
   await prisma.responsible.deleteMany()
   await prisma.user.deleteMany()
