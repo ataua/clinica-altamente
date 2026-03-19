@@ -1,95 +1,11 @@
 import NextAuth from "next-auth"
+import type { Session } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import { verifyPassword } from "@/lib/bcrypt"
+import type { Role } from "@prisma/client"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: {
-    createUser: async (userData: { name?: string; email: string; emailVerified?: Date; image?: string }) => {
-      return prisma.user.create({
-        data: {
-          name: userData.name,
-          email: userData.email,
-          emailVerified: userData.emailVerified,
-          image: userData.image,
-        },
-      })
-    },
-    getUser: async (id: string) => {
-      return prisma.user.findUnique({ where: { id } })
-    },
-    getUserByEmail: async (email: string) => {
-      return prisma.user.findUnique({ where: { email } })
-    },
-    getUserByAccount: async (account: { provider: string; providerAccountId: string }) => {
-      const accountRecord = await prisma.account.findUnique({
-        where: {
-          provider_providerAccountId: {
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
-          },
-        },
-      })
-      if (!accountRecord) return null
-      return prisma.user.findUnique({ where: { id: accountRecord.userId } })
-    },
-    updateUser: async (data: { id: string; name?: string; email?: string; emailVerified?: Date; image?: string }) => {
-      if (!data.id) throw new Error("User id is required")
-      return prisma.user.update({
-        where: { id: data.id },
-        data: {
-          name: data.name,
-          email: data.email,
-          emailVerified: data.emailVerified,
-          image: data.image,
-        },
-      })
-    },
-    deleteUser: async (id: string) => {
-      return prisma.user.delete({ where: { id } })
-    },
-    linkAccount: async (accountData: { userId: string; type: string; provider: string; providerAccountId: string; access_token?: string; refresh_token?: string; expires_at?: number; token_type?: string; scope?: string; id_token?: string; session_state?: string }) => {
-      return prisma.account.create({ data: accountData })
-    },
-    unlinkAccount: async (account: { provider: string; providerAccountId: string }) => {
-      return prisma.account.delete({
-        where: {
-          provider_providerAccountId: {
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
-          },
-        },
-      })
-    },
-    createSession: async (sessionData: { sessionToken: string; userId: string; expires: Date }) => {
-      return prisma.session.create({ data: sessionData })
-    },
-    getSession: async (token: string) => {
-      return prisma.session.findUnique({ where: { sessionToken: token } })
-    },
-    updateSession: async (data: { sessionToken: string; expires: Date }) => {
-      return prisma.session.update({
-        where: { sessionToken: data.sessionToken },
-        data: { expires: data.expires },
-      })
-    },
-    deleteSession: async (sessionToken: string) => {
-      return prisma.session.delete({ where: { sessionToken } })
-    },
-    createVerificationToken: async (tokenData: { identifier: string; token: string; expires: Date }) => {
-      return prisma.verificationToken.create({ data: tokenData })
-    },
-    useVerificationToken: async (tokenData: { token: string }) => {
-      const token = await prisma.verificationToken.findUnique({
-        where: { token: tokenData.token },
-      })
-      if (!token) return null
-      await prisma.verificationToken.delete({
-        where: { token: tokenData.token },
-      })
-      return token
-    },
-  } as unknown,
   providers: [
     Credentials({
       name: "credentials",
@@ -133,14 +49,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id!
-        token.role = (user as unknown as { role?: string }).role || 'PATIENT'
+        token.role = (user as { role?: Role }).role || 'PATIENT'
       }
       return token
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id as string
-        session.user.role = token.role as 'ADMIN' | 'PROFESSIONAL' | 'SECRETARY' | 'PATIENT' | 'RESPONSIBLE' | 'TEACHER' | 'COORDINATOR'
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { id: true, role: true },
+        })
+        
+        if (!dbUser) {
+          return {} as Session
+        }
+        
+        session.user.id = dbUser.id
+        session.user.role = dbUser.role
       }
       return session
     },

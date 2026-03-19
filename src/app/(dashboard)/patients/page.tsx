@@ -48,6 +48,7 @@ export default function PatientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPatient, setEditingPatient] = useState<Patient | undefined>()
   const [submitting, setSubmitting] = useState(false)
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -60,8 +61,8 @@ export default function PatientsPage() {
       const data = await res.json()
       
       if (res.ok) {
-        setPatients(data.patients)
-        setPagination(data.pagination)
+        setPatients(data.data || [])
+        setPagination(data.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 })
       }
     } catch (error) {
       console.error('Error fetching patients:', error)
@@ -79,7 +80,7 @@ export default function PatientsPage() {
       const data = await res.json()
       
       if (res.ok) {
-        setResponsibles(data.responsibles || [])
+        setResponsibles(data.data || [])
       }
     } catch (error) {
       console.error('Error fetching responsibles:', error)
@@ -123,13 +124,18 @@ export default function PatientsPage() {
 
       if (res.ok) {
         setIsModalOpen(false)
+        setFormErrors({})
         fetchPatients()
         toast.success('Paciente criado com sucesso!')
       } else {
         const error = await res.json()
-        toast.error('Erro ao criar paciente', {
-          description: error.message || 'Verifique os dados e tente novamente',
-        })
+        if (error.code === 'CONFLICT') {
+          setFormErrors({ email: error.error || 'Email já cadastrado' })
+        } else {
+          toast.error('Erro ao criar paciente', {
+            description: error.message || 'Verifique os dados e tente novamente',
+          })
+        }
       }
     } catch (error) {
       console.error('Error creating patient:', error)
@@ -172,13 +178,18 @@ export default function PatientsPage() {
       if (res.ok) {
         setIsModalOpen(false)
         setEditingPatient(undefined)
+        setFormErrors({})
         fetchPatients()
         toast.success('Paciente atualizado com sucesso!')
       } else {
         const error = await res.json()
-        toast.error('Erro ao atualizar paciente', {
-          description: error.message || 'Tente novamente',
-        })
+        if (error.code === 'CONFLICT') {
+          setFormErrors({ email: error.error || 'Email já cadastrado' })
+        } else {
+          toast.error('Erro ao atualizar paciente', {
+            description: error.message || 'Tente novamente',
+          })
+        }
       }
     } catch (error) {
       console.error('Error updating patient:', error)
@@ -261,11 +272,13 @@ export default function PatientsPage() {
 
       <PatientModal
         isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setEditingPatient(undefined); }}
+        onClose={() => { setIsModalOpen(false); setEditingPatient(undefined); setFormErrors({}); }}
         onSubmit={editingPatient ? handleUpdatePatient : handleCreatePatient}
         initialData={editingPatient}
         responsibles={responsibles}
         isLoading={submitting}
+        errors={formErrors}
+        onClearErrors={() => setFormErrors({})}
       />
     </div>
   )

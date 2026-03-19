@@ -36,8 +36,9 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('')
   
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<{ name: string; email: string; role: string } | undefined>()
+  const [editingUser, setEditingUser] = useState<{ id?: string; name: string; email: string; role: string } | undefined>()
   const [submitting, setSubmitting] = useState(false)
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -52,8 +53,8 @@ export default function UsersPage() {
       const data = await res.json()
       
       if (res.ok) {
-        setUsers(data.users)
-        setPagination(data.pagination)
+        setUsers(data.data || [])
+        setPagination(data.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 })
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -90,17 +91,59 @@ export default function UsersPage() {
 
       if (res.ok) {
         setIsModalOpen(false)
+        setFormErrors({})
         fetchUsers()
         toast.success('Usuário criado com sucesso!')
       } else {
         const error = await res.json()
-        toast.error('Erro ao criar usuário', {
-          description: error.message || 'Verifique os dados e tente novamente',
-        })
+        if (error.code === 'CONFLICT') {
+          setFormErrors({ email: error.error || 'Email já cadastrado' })
+        } else {
+          toast.error('Erro ao criar usuário', {
+            description: error.message || 'Verifique os dados e tente novamente',
+          })
+        }
       }
     } catch (error) {
       console.error('Error creating user:', error)
       toast.error('Erro ao criar usuário', {
+        description: 'Tente novamente mais tarde',
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleUpdateUser = async (data: { name: string; email: string; password?: string; role: string }) => {
+    if (!editingUser?.id) return
+
+    try {
+      setSubmitting(true)
+      const res = await fetch(`/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (res.ok) {
+        setIsModalOpen(false)
+        setEditingUser(undefined)
+        setFormErrors({})
+        fetchUsers()
+        toast.success('Usuário atualizado com sucesso!')
+      } else {
+        const error = await res.json()
+        if (error.code === 'CONFLICT') {
+          setFormErrors({ email: error.error || 'Email já cadastrado' })
+        } else {
+          toast.error('Erro ao atualizar usuário', {
+            description: error.message || 'Verifique os dados e tente novamente',
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error updating user:', error)
+      toast.error('Erro ao atualizar usuário', {
         description: 'Tente novamente mais tarde',
       })
     } finally {
@@ -134,7 +177,7 @@ export default function UsersPage() {
   const handleEditUser = (id: string) => {
     const user = users.find(u => u.id === id)
     if (user) {
-      setEditingUser({ name: user.name, email: user.email, role: user.role })
+      setEditingUser({ id, name: user.name, email: user.email, role: user.role })
       setIsModalOpen(true)
     }
   }
@@ -233,10 +276,12 @@ export default function UsersPage() {
 
       <UserModal
         isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setEditingUser(undefined); }}
-        onSubmit={handleCreateUser}
+        onClose={() => { setIsModalOpen(false); setEditingUser(undefined); setFormErrors({}); }}
+        onSubmit={editingUser?.id ? handleUpdateUser : handleCreateUser}
         initialData={editingUser}
         isLoading={submitting}
+        errors={formErrors}
+        onClearErrors={() => setFormErrors({})}
       />
     </div>
   )

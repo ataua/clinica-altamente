@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/atoms/Input'
+import { PasswordInput } from '@/components/atoms/PasswordInput'
 import { Select } from '@/components/atoms/Select'
 import { Button } from '@/components/atoms/Button'
 
@@ -15,6 +16,8 @@ interface UserModalProps {
     role: string
   }
   isLoading?: boolean
+  errors?: Record<string, string>
+  onClearErrors?: () => void
 }
 
 const roleOptions = [
@@ -27,13 +30,15 @@ const roleOptions = [
   { value: 'ADMIN', label: 'Administrador' },
 ]
 
-export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading }: UserModalProps) {
+export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading, errors: externalErrors = {}, onClearErrors }: UserModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('PATIENT')
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({})
   const [initialized, setInitialized] = useState(false)
+
+  const errors = { ...localErrors, ...externalErrors }
 
   useEffect(() => {
     if (!initialized) {
@@ -48,9 +53,10 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading }:
         setPassword('')
         setRole('PATIENT')
       }
-      setErrors({})
+      setLocalErrors({})
+      onClearErrors?.()
     }
-  }, [initialized, initialData])
+  }, [initialized, initialData, onClearErrors])
 
   useEffect(() => {
     if (isOpen) {
@@ -69,7 +75,7 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading }:
     }
 
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
+      setLocalErrors(newErrors)
       return
     }
 
@@ -107,9 +113,8 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, isLoading }:
           />
           
           {!initialData && (
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               label="Senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

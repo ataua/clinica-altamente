@@ -45,13 +45,6 @@ bun run dev
 
 Acesse: http://localhost:3000
 
-### 4. Credenciais de Acesso
-
-| Campo | Valor padrão |
-|-------|--------------|
-| Email | admin@clinica.com |
-| Senha | admin123 |
-
 ## Scripts Disponíveis
 
 | Comando | Descrição |

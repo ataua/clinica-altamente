@@ -14,30 +14,36 @@ export default function RegisterPage() {
     confirmPassword: "",
     role: "PATIENT",
   });
-  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    const newErrors: Record<string, string> = {};
 
+    if (!formData.name || formData.name.length < 2) {
+      newErrors.name = "Nome deve ter pelo menos 2 caracteres";
+    }
+    if (!formData.email || !formData.email.includes("@")) {
+      newErrors.email = "Email inválido";
+    }
+    if (!formData.password || formData.password.length < 6) {
+      newErrors.password = "Senha deve ter pelo menos 6 caracteres";
+    }
     if (formData.password !== formData.confirmPassword) {
-      setError("As senhas não coincidem");
-      toast.error("As senhas não coincidem", {
-        description: "Por favor, verifique se as senhas são iguais",
-      });
-      return;
+      newErrors.confirmPassword = "As senhas não coincidem";
     }
 
-    if (formData.password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres");
-      toast.error("Senha muito curta", {
-        description: "A senha deve ter pelo menos 6 caracteres",
-      });
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -57,6 +63,10 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         const data = await response.json();
+        if (data.code === "CONFLICT") {
+          setErrors({ email: data.error || "Email já cadastrado" });
+          return;
+        }
         throw new Error(data.error || "Erro ao criar conta");
       }
 
@@ -65,20 +75,21 @@ export default function RegisterPage() {
       });
       router.push("/login?registered=true");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-        toast.error("Erro ao criar conta", {
-          description: err.message,
-        });
-      } else {
-        setError("Ocorreu um erro ao criar a conta");
-        toast.error("Erro ao criar conta", {
-          description: "Tente novamente mais tarde",
-        });
-      }
+      const errorMessage = err instanceof Error ? err.message : "Erro ao criar conta";
+      toast.error("Erro ao criar conta", {
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const getInputClass = (fieldName: string) => {
+    return `w-full px-4 py-3 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+      errors[fieldName]
+        ? "border-red-500 dark:border-red-500"
+        : "border-gray-300 dark:border-gray-600"
+    }`;
   };
 
   return (
@@ -96,12 +107,6 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <div className="p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
           <div>
             <label
               htmlFor="name"
@@ -115,10 +120,10 @@ export default function RegisterPage() {
               type="text"
               value={formData.name}
               onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={getInputClass("name")}
               placeholder="Seu nome"
             />
+            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
           </div>
 
           <div>
@@ -134,10 +139,10 @@ export default function RegisterPage() {
               type="email"
               value={formData.email}
               onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={getInputClass("email")}
               placeholder="seu@email.com"
             />
+            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
           </div>
 
           <div>
@@ -169,17 +174,35 @@ export default function RegisterPage() {
             >
               Senha
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              minLength={6}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Mínimo 6 caracteres"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleChange}
+                className={`${getInputClass("password")} pr-10`}
+                placeholder="Mínimo 6 caracteres"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
           </div>
 
           <div>
@@ -189,16 +212,35 @@ export default function RegisterPage() {
             >
               Confirmar Senha
             </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Confirme sua senha"
-            />
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`${getInputClass("confirmPassword")} pr-10`}
+                placeholder="Confirme sua senha"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+              >
+                {showConfirmPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>}
           </div>
 
           <button

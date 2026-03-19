@@ -22,8 +22,7 @@
     "db:generate": "bunx prisma generate",
     "db:push": "bunx prisma db push",
     "db:studio": "bunx prisma studio",
-    "db:migrate": "bunx prisma migrate dev",
-    "db:init": "bun --bun prisma/seed.ts"
+    "db:migrate": "bunx prisma migrate dev"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

@@ -3,22 +3,22 @@ import { CreateAppointmentInput, UpdateAppointmentInput, AppointmentFilterInput 
 import { AppointmentStatus } from '@prisma/client'
 
 export class AppointmentService {
-  async create(data: CreateAppointmentInput) {
-    const scheduledDateTime = new Date(data.scheduledDateTime)
-    const appointmentType = await prisma.appointmentType.findUnique({
+  async create ( data: CreateAppointmentInput ) {
+    const scheduledDateTime = new Date( data.scheduledDateTime )
+    const appointmentType = await prisma.appointmentType.findUnique( {
       where: { id: data.appointmentTypeId },
-    })
+    } )
 
-    if (!appointmentType) {
-      throw new Error('Tipo de agendamento não encontrado')
+    if ( !appointmentType ) {
+      throw new Error( 'Tipo de agendamento não encontrado' )
     }
 
-    const endDateTime = new Date(scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000)
+    const endDateTime = new Date( scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000 )
 
-    const conflictingAppointment = await prisma.appointment.findFirst({
+    const conflictingAppointment = await prisma.appointment.findFirst( {
       where: {
         professionalId: data.professionalId,
-        status: { in: ['SCHEDULED', 'CONFIRMED'] },
+        status: { in: [ 'SCHEDULED', 'CONFIRMED' ] },
         OR: [
           {
             scheduledDateTime: { lte: scheduledDateTime },
@@ -34,13 +34,13 @@ export class AppointmentService {
           },
         ],
       },
-    })
+    } )
 
-    if (conflictingAppointment) {
-      throw new Error('Horário conflictado com outro agendamento')
+    if ( conflictingAppointment ) {
+      throw new Error( 'Horário com conflito com outro agendamento' )
     }
 
-    return prisma.appointment.create({
+    return prisma.appointment.create( {
       data: {
         patientId: data.patientId,
         professionalId: data.professionalId,
@@ -58,27 +58,27 @@ export class AppointmentService {
         },
         appointmentType: true,
       },
-    })
+    } )
   }
 
-  async findAll(filter: AppointmentFilterInput) {
+  async findAll ( filter: AppointmentFilterInput ) {
     const { page, limit, startDate, endDate, professionalId, patientId, status } = filter
-    const skip = (page - 1) * limit
+    const skip = ( page - 1 ) * limit
 
     const where: Record<string, unknown> = {}
 
-    if (startDate || endDate) {
+    if ( startDate || endDate ) {
       where.scheduledDateTime = {}
-      if (startDate) (where.scheduledDateTime as Record<string, Date>).gte = new Date(startDate)
-      if (endDate) (where.scheduledDateTime as Record<string, Date>).lte = new Date(endDate)
+      if ( startDate ) ( where.scheduledDateTime as Record<string, Date> ).gte = new Date( startDate )
+      if ( endDate ) ( where.scheduledDateTime as Record<string, Date> ).lte = new Date( endDate )
     }
 
-    if (professionalId) where.professionalId = professionalId
-    if (patientId) where.patientId = patientId
-    if (status) where.status = status
+    if ( professionalId ) where.professionalId = professionalId
+    if ( patientId ) where.patientId = patientId
+    if ( status ) where.status = status
 
-    const [appointments, total] = await Promise.all([
-      prisma.appointment.findMany({
+    const [ appointments, total ] = await Promise.all( [
+      prisma.appointment.findMany( {
         where,
         skip,
         take: limit,
@@ -92,12 +92,12 @@ export class AppointmentService {
           },
           appointmentType: true,
         },
-      }),
-      prisma.appointment.count({ where }),
-    ])
+      } ),
+      prisma.appointment.count( { where } ),
+    ] )
 
     return {
-      appointments: appointments.map((apt) => ({
+      appointments: appointments.map( ( apt ) => ( {
         id: apt.id,
         patientName: apt.patient.user.name,
         professionalName: apt.professional.user.name,
@@ -106,18 +106,18 @@ export class AppointmentService {
         endDateTime: apt.endDateTime.toISOString(),
         status: apt.status,
         notes: apt.notes,
-      })),
+      } ) ),
       pagination: {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil( total / limit ),
       },
     }
   }
 
-  async findById(id: string) {
-    const appointment = await prisma.appointment.findUnique({
+  async findById ( id: string ) {
+    const appointment = await prisma.appointment.findUnique( {
       where: { id },
       include: {
         patient: {
@@ -128,9 +128,9 @@ export class AppointmentService {
         },
         appointmentType: true,
       },
-    })
+    } )
 
-    if (!appointment) return null
+    if ( !appointment ) return null
 
     return {
       id: appointment.id,
@@ -148,30 +148,30 @@ export class AppointmentService {
     }
   }
 
-  async update(id: string, data: UpdateAppointmentInput) {
-    const existing = await prisma.appointment.findUnique({ where: { id } })
-    if (!existing) throw new Error('Agendamento não encontrado')
+  async update ( id: string, data: UpdateAppointmentInput ) {
+    const existing = await prisma.appointment.findUnique( { where: { id } } )
+    if ( !existing ) throw new Error( 'Agendamento não encontrado' )
 
     const updateData: Record<string, unknown> = {}
 
-    if (data.scheduledDateTime) {
-      const scheduledDateTime = new Date(data.scheduledDateTime)
-      const appointmentType = await prisma.appointmentType.findUnique({
+    if ( data.scheduledDateTime ) {
+      const scheduledDateTime = new Date( data.scheduledDateTime )
+      const appointmentType = await prisma.appointmentType.findUnique( {
         where: { id: data.appointmentTypeId || existing.appointmentTypeId },
-      })
+      } )
 
-      if (!appointmentType) throw new Error('Tipo de agendamento não encontrado')
+      if ( !appointmentType ) throw new Error( 'Tipo de agendamento não encontrado' )
 
       updateData.scheduledDateTime = scheduledDateTime
-      updateData.endDateTime = new Date(scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000)
+      updateData.endDateTime = new Date( scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000 )
     }
 
-    if (data.appointmentTypeId) updateData.appointmentTypeId = data.appointmentTypeId
-    if (data.status) updateData.status = data.status as AppointmentStatus
-    if (data.notes !== undefined) updateData.notes = data.notes
-    if (data.cancellationReason !== undefined) updateData.cancellationReason = data.cancellationReason
+    if ( data.appointmentTypeId ) updateData.appointmentTypeId = data.appointmentTypeId
+    if ( data.status ) updateData.status = data.status as AppointmentStatus
+    if ( data.notes !== undefined ) updateData.notes = data.notes
+    if ( data.cancellationReason !== undefined ) updateData.cancellationReason = data.cancellationReason
 
-    return prisma.appointment.update({
+    return prisma.appointment.update( {
       where: { id },
       data: updateData,
       include: {
@@ -179,22 +179,22 @@ export class AppointmentService {
         professional: { include: { user: { select: { name: true } } } },
         appointmentType: true,
       },
-    })
+    } )
   }
 
-  async cancel(id: string, reason: string) {
-    const existing = await prisma.appointment.findUnique({ where: { id } })
-    if (!existing) throw new Error('Agendamento não encontrado')
+  async cancel ( id: string, reason: string ) {
+    const existing = await prisma.appointment.findUnique( { where: { id } } )
+    if ( !existing ) throw new Error( 'Agendamento não encontrado' )
 
-    if (existing.status === 'CANCELLED') {
-      throw new Error('Agendamento já está cancelado')
+    if ( existing.status === 'CANCELLED' ) {
+      throw new Error( 'Agendamento já está cancelado' )
     }
 
-    if (existing.status === 'COMPLETED') {
-      throw new Error('Não é possível cancelar um agendamento concluído')
+    if ( existing.status === 'COMPLETED' ) {
+      throw new Error( 'Não é possível cancelar um agendamento concluído' )
     }
 
-    return prisma.appointment.update({
+    return prisma.appointment.update( {
       where: { id },
       data: {
         status: 'CANCELLED' as AppointmentStatus,
@@ -205,37 +205,37 @@ export class AppointmentService {
         professional: { include: { user: { select: { name: true } } } },
         appointmentType: true,
       },
-    })
+    } )
   }
 
-  async reschedule(id: string, newDateTime: string, newProfessionalId?: string) {
-    const existing = await prisma.appointment.findUnique({ where: { id } })
-    if (!existing) throw new Error('Agendamento não encontrado')
+  async reschedule ( id: string, newDateTime: string, newProfessionalId?: string ) {
+    const existing = await prisma.appointment.findUnique( { where: { id } } )
+    if ( !existing ) throw new Error( 'Agendamento não encontrado' )
 
-    if (existing.status === 'CANCELLED') {
-      throw new Error('Não é possível reagendar um agendamento cancelado')
+    if ( existing.status === 'CANCELLED' ) {
+      throw new Error( 'Não é possível reagendar um agendamento cancelado' )
     }
 
-    if (existing.status === 'COMPLETED') {
-      throw new Error('Não é possível reagendar um agendamento concluído')
+    if ( existing.status === 'COMPLETED' ) {
+      throw new Error( 'Não é possível reagendar um agendamento concluído' )
     }
 
-    const scheduledDateTime = new Date(newDateTime)
-    const appointmentType = await prisma.appointmentType.findUnique({
+    const scheduledDateTime = new Date( newDateTime )
+    const appointmentType = await prisma.appointmentType.findUnique( {
       where: { id: existing.appointmentTypeId },
-    })
+    } )
 
-    if (!appointmentType) throw new Error('Tipo de agendamento não encontrado')
+    if ( !appointmentType ) throw new Error( 'Tipo de agendamento não encontrado' )
 
-    const endDateTime = new Date(scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000)
+    const endDateTime = new Date( scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000 )
 
     const professionalId = newProfessionalId || existing.professionalId
 
-    const conflictingAppointment = await prisma.appointment.findFirst({
+    const conflictingAppointment = await prisma.appointment.findFirst( {
       where: {
         id: { not: id },
         professionalId,
-        status: { in: ['SCHEDULED', 'CONFIRMED'] },
+        status: { in: [ 'SCHEDULED', 'CONFIRMED' ] },
         OR: [
           {
             scheduledDateTime: { lte: scheduledDateTime },
@@ -251,97 +251,97 @@ export class AppointmentService {
           },
         ],
       },
-    })
+    } )
 
-    if (conflictingAppointment) {
-      throw new Error('Horário conflictado com outro agendamento')
+    if ( conflictingAppointment ) {
+      throw new Error( 'Horário com conflito com outro agendamento' )
     }
 
-    return prisma.appointment.update({
+    return prisma.appointment.update( {
       where: { id },
       data: {
         scheduledDateTime,
         endDateTime,
         status: 'SCHEDULED' as AppointmentStatus,
-        ...(newProfessionalId && { professionalId: newProfessionalId }),
+        ...( newProfessionalId && { professionalId: newProfessionalId } ),
       },
       include: {
         patient: { include: { user: { select: { name: true } } } },
         professional: { include: { user: { select: { name: true } } } },
         appointmentType: true,
       },
-    })
+    } )
   }
 
-  async delete(id: string) {
-    return prisma.appointment.delete({ where: { id } })
+  async delete ( id: string ) {
+    return prisma.appointment.delete( { where: { id } } )
   }
 
-  async getAppointmentTypes() {
-    return prisma.appointmentType.findMany({
+  async getAppointmentTypes () {
+    return prisma.appointmentType.findMany( {
       where: { isActive: true },
       orderBy: { name: 'asc' },
-    })
+    } )
   }
 
-  async getProfessionals() {
-    return prisma.professional.findMany({
+  async getProfessionals () {
+    return prisma.professional.findMany( {
       include: {
         user: { select: { name: true } },
       },
-    })
+    } )
   }
 
-  async getAvailableSlots(professionalId: string, date: string) {
-    const targetDate = new Date(date)
+  async getAvailableSlots ( professionalId: string, date: string ) {
+    const targetDate = new Date( date )
     const dayOfWeek = targetDate.getDay()
 
-    const schedule = await prisma.professionalSchedule.findFirst({
+    const schedule = await prisma.professionalSchedule.findFirst( {
       where: {
         professionalId,
         dayOfWeek,
         isActive: true,
       },
-    })
+    } )
 
-    if (!schedule) {
+    if ( !schedule ) {
       return { slots: [], message: 'Profissional não atende neste dia' }
     }
 
-    const appointments = await prisma.appointment.findMany({
+    const appointments = await prisma.appointment.findMany( {
       where: {
         professionalId,
-        status: { in: ['SCHEDULED', 'CONFIRMED'] },
+        status: { in: [ 'SCHEDULED', 'CONFIRMED' ] },
         scheduledDateTime: {
-          gte: new Date(targetDate.setHours(0, 0, 0, 0)),
-          lt: new Date(targetDate.setHours(23, 59, 59, 999)),
+          gte: new Date( targetDate.setHours( 0, 0, 0, 0 ) ),
+          lt: new Date( targetDate.setHours( 23, 59, 59, 999 ) ),
         },
       },
       orderBy: { scheduledDateTime: 'asc' },
-    })
+    } )
 
     const slots: string[] = []
     const slotDuration = 30
 
-    const parseTimeToMinutes = (timeStr: string) => {
-      const [hours, minutes] = timeStr.split(':').map(Number)
+    const parseTimeToMinutes = ( timeStr: string ) => {
+      const [ hours, minutes ] = timeStr.split( ':' ).map( Number )
       return hours * 60 + minutes
     }
 
-    const startMinutes = parseTimeToMinutes(schedule.startTime)
-    const endMinutes = parseTimeToMinutes(schedule.endTime)
+    const startMinutes = parseTimeToMinutes( schedule.startTime )
+    const endMinutes = parseTimeToMinutes( schedule.endTime )
 
-    for (let minutes = startMinutes; minutes < endMinutes; minutes += slotDuration) {
-      const slotTime = new Date(targetDate)
-      slotTime.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0)
+    for ( let minutes = startMinutes; minutes < endMinutes; minutes += slotDuration ) {
+      const slotTime = new Date( targetDate )
+      slotTime.setHours( Math.floor( minutes / 60 ), minutes % 60, 0, 0 )
 
       const isAvailable = !appointments.some(
-        (apt) =>
+        ( apt ) =>
           slotTime >= apt.scheduledDateTime && slotTime < apt.endDateTime
       )
 
-      if (isAvailable) {
-        slots.push(slotTime.toISOString())
+      if ( isAvailable ) {
+        slots.push( slotTime.toISOString() )
       }
     }
 

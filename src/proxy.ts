@@ -1,42 +1,31 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const validPaths = [
+const ALLOWED_PREFIXES = [
   '/',
   '/login',
   '/register',
   '/calendar',
   '/patients',
   '/appointments',
-  '/admin/users',
+  '/admin',
   '/api-docs',
-  '/api-docs/swagger',
-  '/api-docs/json',
-  '/api/auth',
-  '/api/users',
-  '/api/patients',
-  '/api/appointments',
-  '/api/attendances',
+  '/api',
+]
+
+const PROTECTED_PATHS = [
+  '/_next',
+  '/static',
 ]
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (pathname === '/api-docs/json') {
+  if (PROTECTED_PATHS.some(prefix => pathname.startsWith(prefix))) {
     return NextResponse.next()
   }
 
-  for (const validPath of validPaths) {
-    if (pathname === validPath || pathname.startsWith(validPath + '/')) {
-      return NextResponse.next()
-    }
-  }
-
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next()
-  }
-
-  if (pathname.startsWith('/_next/') || pathname.startsWith('/static/')) {
+  if (ALLOWED_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'))) {
     return NextResponse.next()
   }
 
@@ -44,7 +33,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!api-docs/json).*)',
-  ],
+  matcher: '/((?!_next/static|_next/image|favicon.ico).*)',
 }

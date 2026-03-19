@@ -60,7 +60,7 @@ export default function AppointmentsPage() {
       const data = await res.json()
       
       if (res.ok) {
-        let filtered = data.appointments || []
+        let filtered = data.data || []
         
         if (searchTerm) {
           filtered = filtered.filter((apt: Appointment) =>
@@ -71,7 +71,7 @@ export default function AppointmentsPage() {
         }
         
         setAppointments(filtered)
-        setPagination(data.pagination)
+        setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 })
       }
     } catch (error) {
       console.error('Error fetching appointments:', error)

@@ -6,6 +6,25 @@ This is a medical clinic management system built with Next.js 16, TypeScript, Pr
 
 ---
 
+## Trello Integration
+
+**Board:** Clínica Altamente  
+**Board ID:** `69af4c44dc2cf3594724b0f0`  
+**URL:** https://trello.com/b/69af4c44dc2cf3594724b0f0
+
+### Lists
+| List Name | List ID |
+|-----------|---------|
+| User Stories | `69af4c583cba3231e98fec2f` |
+| Backlog | `69af4c64c0ce24263ada6773` |
+| To do | `69af4c61e47d579443a72863` |
+| Doing | `69af4c683be098e9e3e1c604` |
+| Testing | `69b6f1f24882b0c02cd5bdb9` |
+| Review | `69af4c79fc543b93a9903460` |
+| Done | `69af4c6b9b9a422b3a610ce8` |
+
+---
+
 ## Build & Development Commands
 
 ### Development
@@ -32,7 +51,6 @@ bun run db:generate   # Generate Prisma Client
 bun run db:push       # Push schema changes to database
 bun run db:studio     # Open Prisma Studio
 bun run db:migrate    # Create and run migrations
-bun run db:init       # Seed database with default admin user
 ```
 
 ---
@@ -165,7 +183,6 @@ Follow conventional commits:
 Required variables (see `.env.example`):
 - `DATABASE_URL` - PostgreSQL connection string
 - `AUTH_SECRET` - NextAuth secret (generate with `openssl rand -base64 32`)
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD` - Default admin credentials
 
 ---
 

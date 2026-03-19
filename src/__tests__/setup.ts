@@ -1,11 +1,11 @@
 import { beforeAll, afterAll } from 'bun:test'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+  prisma: typeof prisma | undefined
 }
 
-export const testPrisma = globalForPrisma.prisma ?? new PrismaClient()
+export const testPrisma = globalForPrisma.prisma ?? prisma
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = testPrisma
 
@@ -16,3 +16,19 @@ beforeAll(async () => {
 afterAll(async () => {
   await testPrisma.$disconnect()
 })
+
+export async function cleanupDatabase() {
+  await testPrisma.appointment.deleteMany()
+  await testPrisma.attendance.deleteMany()
+  await testPrisma.patient.deleteMany()
+  await testPrisma.professional.deleteMany()
+  await testPrisma.professionalSchedule.deleteMany()
+  await testPrisma.appointmentType.deleteMany()
+  await testPrisma.responsibleContact.deleteMany()
+  await testPrisma.responsible.deleteMany()
+  await testPrisma.user.deleteMany()
+}
+
+export function uniqueEmail() {
+  return `test_${Date.now()}_${Math.random()}@test.com`
+}

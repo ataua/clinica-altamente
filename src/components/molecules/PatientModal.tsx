@@ -65,6 +65,8 @@ interface PatientModalProps {
   }
   responsibles: ResponsibleContact[]
   isLoading?: boolean
+  errors?: Record<string, string>
+  onClearErrors?: () => void
 }
 
 const genderOptions = [
@@ -84,7 +86,7 @@ const relationshipOptions = [
   { value: 'Outro', label: 'Outro' },
 ]
 
-export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsibles, isLoading }: PatientModalProps) {
+export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsibles, isLoading, errors: externalErrors = {}, onClearErrors }: PatientModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -111,7 +113,8 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
   const [responsibleCpf, setResponsibleCpf] = useState('')
   const [responsibleRelationship, setResponsibleRelationship] = useState('')
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({})
+  const errors = { ...localErrors, ...externalErrors }
 
   const resetForm = () => {
     setName('')
@@ -165,8 +168,9 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
     } else {
       resetForm()
     }
-    setErrors({})
-  }, [initialData, isOpen])
+    setLocalErrors({})
+    onClearErrors?.()
+  }, [initialData, isOpen, onClearErrors])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -184,7 +188,7 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
       }
     }
 
-    setErrors(newErrors)
+    setLocalErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
