@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const phoneRegex = /^\(?[0-9]{2}\)? ?[0-9]{4,5}-?[0-9]{4}$/
+const phoneRegex = /^\(?\d{2}\)?[\s.-]?(\d{4,5})[\s.-]?\d{4}$/
 
 export const CreatePatientDTO = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -18,7 +18,7 @@ export const CreatePatientDTO = z.object({
     state: z.string().optional(),
     zipCode: z.string().optional(),
   }).optional(),
-  responsibleContactId: z.string().uuid('ID de responsável inválido').optional(),
+  responsibleContactId: z.string().cuid('ID de responsável inválido').optional(),
   responsibleContact: z.object({
     name: z.string().min(2, 'Nome é obrigatório'),
     email: z.string().email('Email inválido').optional().or(z.literal('')),
@@ -45,7 +45,14 @@ export const UpdatePatientDTO = z.object({
     state: z.string().optional(),
     zipCode: z.string().optional(),
   }).optional(),
-  responsibleContactId: z.string().uuid().optional(),
+  responsibleContactId: z.string().cuid().optional(),
+  responsibleContact: z.object({
+    name: z.string().min(2, 'Nome é obrigatório'),
+    email: z.string().email('Email inválido').optional().or(z.literal('')),
+    phone: z.string().regex(phoneRegex, 'Telefone inválido'),
+    cpf: z.string().optional(),
+    relationship: z.string().min(2, 'Relacionamento é obrigatório'),
+  }).optional(),
   notes: z.string().optional(),
 })
 

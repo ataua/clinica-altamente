@@ -10,6 +10,7 @@ interface ResponsibleContact {
   name: string
   email: string | null
   phone: string
+  cpf: string | null
   relationship: string
 }
 
@@ -30,10 +31,11 @@ interface PatientTableProps {
   onDelete: (id: string) => void
   onCreate: () => void
   onViewHistory?: (id: string) => void
+  onEditResponsible?: (patientId: string, responsible: ResponsibleContact) => void
   isLoading?: boolean
 }
 
-export function PatientTable({ patients, onEdit, onDelete, onCreate, onViewHistory, isLoading }: PatientTableProps) {
+export function PatientTable({ patients, onEdit, onDelete, onCreate, onViewHistory, onEditResponsible, isLoading }: PatientTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
 
@@ -94,6 +96,7 @@ export function PatientTable({ patients, onEdit, onDelete, onCreate, onViewHisto
               onEdit={onEdit}
               onDelete={onDelete}
               onViewHistory={onViewHistory}
+              onEditResponsible={onEditResponsible}
             />
           ))}
         </div>
@@ -144,9 +147,19 @@ export function PatientTable({ patients, onEdit, onDelete, onCreate, onViewHisto
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                     {patient.responsibleContact ? (
-                      <div>
-                        <p>{patient.responsibleContact.name}</p>
-                        <p className="text-xs text-gray-400">{patient.responsibleContact.relationship}</p>
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <p>{patient.responsibleContact.name}</p>
+                          <p className="text-xs text-gray-400">{patient.responsibleContact.relationship}</p>
+                        </div>
+                        {onEditResponsible && (
+                          <button
+                            onClick={() => onEditResponsible(patient.id, patient.responsibleContact!)}
+                            className="text-green-600 hover:text-green-700 text-xs"
+                          >
+                            Editar
+                          </button>
+                        )}
                       </div>
                     ) : '-'}
                   </td>

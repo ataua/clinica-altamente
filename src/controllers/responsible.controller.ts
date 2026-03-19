@@ -2,7 +2,16 @@ import type { NextRequest } from 'next/server'
 import { BaseController } from './base.controller'
 import { responsibleContactService } from '@/services/responsible.service'
 import { CreateResponsibleDTO, ResponsibleQueryDTO } from '@/dtos/patient.dto'
-import { created, error, conflict, paginated } from '@/lib/response'
+import { created, error, conflict, paginated, success, notFound } from '@/lib/response'
+import { z } from 'zod'
+
+const UpdateResponsibleDTO = z.object({
+  name: z.string().min(2, 'Nome é obrigatório').optional(),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  phone: z.string().regex(/^\(?\d{2}\)?[\s.-]?(\d{4,5})[\s.-]?\d{4}$/, 'Telefone inválido').optional(),
+  cpf: z.string().optional(),
+  relationship: z.string().min(2, 'Relacionamento é obrigatório').optional(),
+})
 
 export class ResponsibleController extends BaseController {
   async findAll(request: NextRequest) {
@@ -55,6 +64,25 @@ export class ResponsibleController extends BaseController {
       return created(result, 'Responsible created successfully', {
         self: { href: `/api/responsibles/${result.id}` },
       })
+    } catch (err) {
+      return error(err)
+    }
+  }
+
+  async update(request: NextRequest, params: Promise<{ id: string }>) {
+    try {
+      await this.requireAuth()
+      const { id } = await params
+
+      const existing = await responsibleContactService.findById(id)
+      if (!existing) return notFound('Responsible')
+
+      const body = await request.json()
+      const data = UpdateResponsibleDTO.parse(body)
+
+      const result = await responsibleContactService.update(id, data)
+
+      return success(result, { message: 'Responsible updated successfully' })
     } catch (err) {
       return error(err)
     }

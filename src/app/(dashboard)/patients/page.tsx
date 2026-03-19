@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { PatientTable } from '@/components/organisms/PatientTable'
 import { PatientModal } from '@/components/molecules/PatientModal'
+import { ResponsibleModal } from '@/components/molecules/ResponsibleModal'
 import { toast } from '@/components/ui/toast'
 
 interface ResponsibleContact {
@@ -49,6 +50,10 @@ export default function PatientsPage() {
   const [editingPatient, setEditingPatient] = useState<Patient | undefined>()
   const [submitting, setSubmitting] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+
+  const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false)
+  const [editingResponsible, setEditingResponsible] = useState<ResponsibleContact | null>(null)
+  const [editingResponsiblePatientId, setEditingResponsiblePatientId] = useState<string | null>(null)
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -241,6 +246,52 @@ export default function PatientsPage() {
     setIsModalOpen(true)
   }
 
+  const handleEditResponsible = async (patientId: string, responsible: ResponsibleContact) => {
+    setEditingResponsible(responsible)
+    setEditingResponsiblePatientId(patientId)
+    setIsResponsibleModalOpen(true)
+  }
+
+  const handleUpdateResponsible = async (data: {
+    name: string
+    email: string
+    phone: string
+    cpf: string
+    relationship: string
+  }) => {
+    if (!editingResponsible || !editingResponsiblePatientId) return
+
+    try {
+      setSubmitting(true)
+      const res = await fetch(`/api/responsibles/${editingResponsible.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (res.ok) {
+        setIsResponsibleModalOpen(false)
+        setEditingResponsible(null)
+        setEditingResponsiblePatientId(null)
+        fetchPatients()
+        fetchResponsibles()
+        toast.success('Responsável atualizado com sucesso!')
+      } else {
+        const error = await res.json()
+        toast.error('Erro ao atualizar responsável', {
+          description: error.message || 'Tente novamente',
+        })
+      }
+    } catch (error) {
+      console.error('Error updating responsible:', error)
+      toast.error('Erro ao atualizar responsável', {
+        description: 'Tente novamente mais tarde',
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (status === 'loading' || (loading && patients.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -266,6 +317,7 @@ export default function PatientsPage() {
           onDelete={handleDeletePatient}
           onCreate={handleCreate}
           onViewHistory={handleViewHistory}
+          onEditResponsible={handleEditResponsible}
           isLoading={loading}
         />
       </main>
@@ -278,6 +330,14 @@ export default function PatientsPage() {
         responsibles={responsibles}
         isLoading={submitting}
         errors={formErrors}
+      />
+
+      <ResponsibleModal
+        isOpen={isResponsibleModalOpen}
+        onClose={() => { setIsResponsibleModalOpen(false); setEditingResponsible(null); setEditingResponsiblePatientId(null); }}
+        onSubmit={handleUpdateResponsible}
+        responsible={editingResponsible!}
+        isLoading={submitting}
       />
     </div>
   )

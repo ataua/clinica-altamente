@@ -5,6 +5,7 @@ interface ResponsibleContact {
   name: string
   email: string | null
   phone: string
+  cpf: string | null
   relationship: string
 }
 
@@ -22,9 +23,10 @@ interface PatientCardProps {
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
   onViewHistory?: (id: string) => void
+  onEditResponsible?: (patientId: string, responsible: ResponsibleContact) => void
 }
 
-export function PatientCard({ patient, onEdit, onDelete, onViewHistory }: PatientCardProps) {
+export function PatientCard({ patient, onEdit, onDelete, onViewHistory, onEditResponsible }: PatientCardProps) {
   const formatDate = (date: string | null) => {
     if (!date) return '-'
     return new Date(date).toLocaleDateString('pt-BR')
@@ -79,13 +81,25 @@ export function PatientCard({ patient, onEdit, onDelete, onViewHistory }: Patien
 
       {patient.responsibleContact && (
         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Responsável:</p>
-          <p className="text-sm text-gray-900 dark:text-white">
-            {patient.responsibleContact.name}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {patient.responsibleContact.relationship} • {formatPhone(patient.responsibleContact.phone)}
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Responsável:</p>
+              <p className="text-sm text-gray-900 dark:text-white">
+                {patient.responsibleContact.name}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {patient.responsibleContact.relationship} • {formatPhone(patient.responsibleContact.phone)}
+              </p>
+            </div>
+            {onEditResponsible && (
+              <button
+                onClick={() => onEditResponsible(patient.id, patient.responsibleContact!)}
+                className="text-xs text-green-600 hover:text-green-700 font-medium"
+              >
+                Editar
+              </button>
+            )}
+          </div>
         </div>
       )}
 

@@ -106,14 +106,12 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
   const [hasResponsible, setHasResponsible] = useState(false)
   const [selectedResponsibleId, setSelectedResponsibleId] = useState('')
   const [createNewResponsible, setCreateNewResponsible] = useState(false)
-  const [isEditingExistingResponsible, setIsEditingExistingResponsible] = useState(false)
   
   const [responsibleName, setResponsibleName] = useState('')
   const [responsibleEmail, setResponsibleEmail] = useState('')
   const [responsiblePhone, setResponsiblePhone] = useState('')
   const [responsibleCpf, setResponsibleCpf] = useState('')
   const [responsibleRelationship, setResponsibleRelationship] = useState('')
-  const [originalResponsibleData, setOriginalResponsibleData] = useState<ResponsibleContact | null>(null)
 
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({})
   const errors = { ...localErrors, ...externalErrors }
@@ -124,44 +122,49 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
     if (initialData) {
       setName(initialData.name || '')
       setEmail(initialData.email || '')
-      setPhone(initialData.phone || '')
-      setCpf(initialData.cpf || '')
+      setPhone(initialData.phone ? formatPhone(initialData.phone) : '')
+      setCpf(initialData.cpf ? formatCpf(initialData.cpf) : '')
       setDateOfBirth(initialData.dateOfBirth ? initialData.dateOfBirth.split('T')[0] : '')
       setGender(initialData.gender || '')
       setNotes(initialData.notes || '')
       
-      if (initialData.address) {
-        setStreet(initialData.address.street || '')
-        setNumber(initialData.address.number || '')
-        setComplement(initialData.address.complement || '')
-        setNeighborhood(initialData.address.neighborhood || '')
-        setCity(initialData.address.city || '')
-        setState(initialData.address.state || '')
-        setZipCode(initialData.address.zipCode || '')
+      if (initialData.address && typeof initialData.address === 'object') {
+        const addr = initialData.address as Record<string, string | undefined>
+        setStreet(addr.street || '')
+        setNumber(addr.number || '')
+        setComplement(addr.complement || '')
+        setNeighborhood(addr.neighborhood || '')
+        setCity(addr.city || '')
+        setState(addr.state || '')
+        setZipCode(addr.zipCode ? formatCep(addr.zipCode) : '')
+      } else {
+        setStreet('')
+        setNumber('')
+        setComplement('')
+        setNeighborhood('')
+        setCity('')
+        setState('')
+        setZipCode('')
       }
 
       if (initialData.responsibleContact) {
         setHasResponsible(true)
         setSelectedResponsibleId(initialData.responsibleContact.id)
         setCreateNewResponsible(false)
-        setIsEditingExistingResponsible(false)
         setResponsibleName(initialData.responsibleContact.name || '')
         setResponsibleEmail(initialData.responsibleContact.email || '')
-        setResponsiblePhone(initialData.responsibleContact.phone || '')
-        setResponsibleCpf(initialData.responsibleContact.cpf || '')
+        setResponsiblePhone(formatPhone(initialData.responsibleContact.phone))
+        setResponsibleCpf(initialData.responsibleContact.cpf ? formatCpf(initialData.responsibleContact.cpf) : '')
         setResponsibleRelationship(initialData.responsibleContact.relationship || '')
-        setOriginalResponsibleData(initialData.responsibleContact)
       } else {
         setHasResponsible(false)
         setSelectedResponsibleId('')
         setCreateNewResponsible(false)
-        setIsEditingExistingResponsible(false)
         setResponsibleName('')
         setResponsibleEmail('')
         setResponsiblePhone('')
         setResponsibleCpf('')
         setResponsibleRelationship('')
-        setOriginalResponsibleData(null)
       }
     } else {
       setName('')
@@ -181,13 +184,11 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
       setHasResponsible(false)
       setSelectedResponsibleId('')
       setCreateNewResponsible(false)
-      setIsEditingExistingResponsible(false)
       setResponsibleName('')
       setResponsibleEmail('')
       setResponsiblePhone('')
       setResponsibleCpf('')
       setResponsibleRelationship('')
-      setOriginalResponsibleData(null)
     }
     setLocalErrors({})
   }, [initialData, isOpen])
@@ -201,7 +202,7 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
     if (hasResponsible) {
       if (createNewResponsible) {
         if (!responsibleName || responsibleName.length < 2) newErrors.responsibleName = 'Nome do responsável é obrigatório'
-        if (!responsiblePhone) newErrors.responsiblePhone = 'Telefone do responsável é obrigatório'
+        if (!responsiblePhone || responsiblePhone.replace(/\D/g, '').length < 10) newErrors.responsiblePhone = 'Telefone do responsável é obrigatório'
         if (!responsibleRelationship) newErrors.responsibleRelationship = 'Parentesco é obrigatório'
       } else if (!selectedResponsibleId) {
         newErrors.responsible = 'Selecione um responsável ou crie um novo'
@@ -274,8 +275,8 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
     } = {
       name,
       email,
-      phone,
-      cpf,
+      phone: phone.replace(/\D/g, ''),
+      cpf: cpf.replace(/\D/g, ''),
       dateOfBirth,
       gender,
       address: formattedAddress,
@@ -287,20 +288,9 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
         data.responsibleContact = {
           name: responsibleName,
           email: responsibleEmail,
-          phone: responsiblePhone,
-          cpf: responsibleCpf,
+          phone: responsiblePhone.replace(/\D/g, ''),
+          cpf: responsibleCpf.replace(/\D/g, ''),
           relationship: responsibleRelationship,
-        }
-      } else if (isEditingExistingResponsible) {
-        data.responsibleContact = {
-          name: responsibleName,
-          email: responsibleEmail,
-          phone: responsiblePhone,
-          cpf: responsibleCpf,
-          relationship: responsibleRelationship,
-        }
-        if (selectedResponsibleId) {
-          data.responsibleContactId = selectedResponsibleId
         }
       } else {
         data.responsibleContactId = selectedResponsibleId
@@ -459,15 +449,13 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
                       value={selectedResponsibleId}
                       onChange={(e) => {
                         setSelectedResponsibleId(e.target.value)
-                        setIsEditingExistingResponsible(false)
                         const selected = responsibles.find(r => r.id === e.target.value)
                         if (selected) {
                           setResponsibleName(selected.name)
                           setResponsibleEmail(selected.email || '')
-                          setResponsiblePhone(selected.phone)
-                          setResponsibleCpf(selected.cpf || '')
+                          setResponsiblePhone(formatPhone(selected.phone))
+                          setResponsibleCpf(selected.cpf ? formatCpf(selected.cpf) : '')
                           setResponsibleRelationship(selected.relationship)
-                          setOriginalResponsibleData(selected)
                         }
                       }}
                       options={[
@@ -479,14 +467,14 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
                       ]}
                       error={errors.responsible}
                     />
-                    {selectedResponsibleId && !createNewResponsible && (
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingExistingResponsible(true)}
-                        className="text-sm text-blue-600 hover:text-blue-700"
-                      >
-                        ✏️ Editar dados do responsável
-                      </button>
+                    {selectedResponsibleId && (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dados do Responsável:</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{responsibleName}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{responsibleEmail}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{responsiblePhone}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{responsibleRelationship}</p>
+                      </div>
                     )}
                     <button
                       type="button"
@@ -495,68 +483,6 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
                     >
                       + Criar novo responsável
                     </button>
-                    {isEditingExistingResponsible && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        <p className="col-span-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Editando Responsável
-                        </p>
-                        <Input
-                          id="responsibleName"
-                          label="Nome do Responsável *"
-                          value={responsibleName}
-                          onChange={(e) => setResponsibleName(e.target.value)}
-                          error={errors.responsibleName}
-                          placeholder="Nome completo"
-                        />
-                        <Input
-                          id="responsibleEmail"
-                          type="email"
-                          label="Email"
-                          value={responsibleEmail}
-                          onChange={(e) => setResponsibleEmail(e.target.value)}
-                          placeholder="email@exemplo.com"
-                        />
-                        <Input
-                          id="responsiblePhone"
-                          label="Telefone *"
-                          value={responsiblePhone}
-                          onChange={(e) => setResponsiblePhone(formatPhone(e.target.value))}
-                          error={errors.responsiblePhone}
-                          placeholder="(11) 99999-9999"
-                        />
-                        <Input
-                          id="responsibleCpf"
-                          label="CPF"
-                          value={responsibleCpf}
-                          onChange={(e) => setResponsibleCpf(formatCpf(e.target.value))}
-                          placeholder="000.000.000-00"
-                        />
-                        <Select
-                          id="responsibleRelationship"
-                          label="Parentesco *"
-                          value={responsibleRelationship}
-                          onChange={(e) => setResponsibleRelationship(e.target.value)}
-                          options={relationshipOptions}
-                          error={errors.responsibleRelationship}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsEditingExistingResponsible(false)
-                            if (originalResponsibleData) {
-                              setResponsibleName(originalResponsibleData.name)
-                              setResponsibleEmail(originalResponsibleData.email || '')
-                              setResponsiblePhone(originalResponsibleData.phone)
-                              setResponsibleCpf(originalResponsibleData.cpf || '')
-                              setResponsibleRelationship(originalResponsibleData.relationship)
-                            }
-                          }}
-                          className="col-span-2 text-sm text-gray-500 hover:text-gray-600"
-                        >
-                          ← Cancelar edição
-                        </button>
-                      </div>
-                    )}
                   </>
                 ) : (
                   <div className="space-y-4">
@@ -580,21 +506,21 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
                         onChange={(e) => setResponsibleEmail(e.target.value)}
                         placeholder="email@exemplo.com"
                       />
-                        <Input
-                          id="responsiblePhone"
-                          label="Telefone *"
-                          value={responsiblePhone}
-                          onChange={(e) => setResponsiblePhone(formatPhone(e.target.value))}
-                          error={errors.responsiblePhone}
-                          placeholder="(11) 99999-9999"
-                        />
-                        <Input
-                          id="responsibleCpf"
-                          label="CPF"
-                          value={responsibleCpf}
-                          onChange={(e) => setResponsibleCpf(formatCpf(e.target.value))}
-                          placeholder="000.000.000-00"
-                        />
+                      <Input
+                        id="responsiblePhone"
+                        label="Telefone *"
+                        value={responsiblePhone}
+                        onChange={(e) => setResponsiblePhone(formatPhone(e.target.value))}
+                        error={errors.responsiblePhone}
+                        placeholder="(11) 99999-9999"
+                      />
+                      <Input
+                        id="responsibleCpf"
+                        label="CPF"
+                        value={responsibleCpf}
+                        onChange={(e) => setResponsibleCpf(formatCpf(e.target.value))}
+                        placeholder="000.000.000-00"
+                      />
                       <Select
                         id="responsibleRelationship"
                         label="Parentesco *"
