@@ -78,10 +78,10 @@ export default function CalendarPage() {
       const typesData = await typesRes.json()
 
       if (appointmentsRes.ok) {
-        setAppointments(appointmentsData.appointments || [])
+        setAppointments(appointmentsData.data || [])
       }
       if (patientsRes.ok) {
-        setPatients(patientsData.patients?.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })) || [])
+        setPatients(patientsData.data?.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })) || [])
       }
       if (professionalsRes.ok) {
         setProfessionals(professionalsData.map((p: { id: string; user: { name: string } }) => ({
