@@ -202,14 +202,28 @@ export function AppointmentModal({
                 error={errors.appointmentTypeId}
               />
 
-              <Input
-                id="scheduledDateTime"
-                type="datetime-local"
-                label="Data/Hora *"
-                value={scheduledDateTime}
-                onChange={(e) => setScheduledDateTime(e.target.value)}
-                error={errors.scheduledDateTime}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  id="scheduledDate"
+                  type="date"
+                  label="Data"
+                  value={selectedSlot ? selectedSlot.split('T')[0] : scheduledDateTime.split('T')[0] || ''}
+                  disabled
+                />
+                <Input
+                  id="scheduledTime"
+                  type="time"
+                  label="Horário *"
+                  value={scheduledDateTime ? scheduledDateTime.split('T')[1]?.slice(0, 5) : ''}
+                  onChange={(e) => {
+                    const datePart = selectedSlot ? selectedSlot.split('T')[0] : scheduledDateTime.split('T')[0]
+                    if (datePart) {
+                      setScheduledDateTime(`${datePart}T${e.target.value}:00.000Z`)
+                    }
+                  }}
+                  error={errors.scheduledDateTime}
+                />
+              </div>
             </>
           )}
 

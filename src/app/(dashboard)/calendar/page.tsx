@@ -81,16 +81,19 @@ export default function CalendarPage() {
         setAppointments(appointmentsData.data || [])
       }
       if (patientsRes.ok) {
-        setPatients(patientsData.data?.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })) || [])
+        const patientsList = patientsData.data?.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })) || []
+        setPatients(patientsList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
       }
       if (professionalsRes.ok) {
-        setProfessionals(professionalsData.map((p: { id: string; user: { name: string } }) => ({
+        const professionalsList = (professionalsData.data || []).map((p: { id: string; user: { name: string } }) => ({
           id: p.id,
           name: p.user.name
-        })) || [])
+        }))
+        setProfessionals(professionalsList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
       }
       if (typesRes.ok) {
-        setAppointmentTypes(typesData || [])
+        const typesList = typesData.data || []
+        setAppointmentTypes(typesList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
       }
     } catch (error) {
       console.error('Error fetching data:', error)
