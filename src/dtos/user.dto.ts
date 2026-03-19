@@ -15,7 +15,7 @@ export const UpdateUserDTO = z.object({
 })
 
 export const UserParamsDTO = z.object({
-  id: z.string().uuid('ID inválido'),
+  id: z.string().cuid('ID inválido'),
 })
 
 export const UserQueryDTO = z.object({
