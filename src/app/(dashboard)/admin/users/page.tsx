@@ -119,10 +119,16 @@ export default function UsersPage() {
 
     try {
       setSubmitting(true)
+      const payload: { name: string; email: string; role: string } = {
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      }
+      
       const res = await fetch(`/api/users/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
 
       if (res.ok) {
