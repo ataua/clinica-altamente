@@ -57,6 +57,7 @@ export class PatientService {
         return {
           ...patient,
           address: parsedAddress,
+          notes: patient.observations,
           name: patient.user?.name,
           email: patient.user?.email,
           responsibleContact: responsibleContact ? {
@@ -112,6 +113,7 @@ export class PatientService {
     return {
       ...patient,
       address: parsedAddress,
+      notes: patient.observations,
       name: patient.user?.name,
       email: patient.user?.email,
       responsibleContact: responsibleContact ? {
