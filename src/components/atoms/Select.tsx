@@ -1,10 +1,16 @@
 import { SelectHTMLAttributes, forwardRef } from 'react'
 import { clsx } from 'clsx'
 
+interface SelectOption {
+  value: string
+  label: string
+  disabled?: boolean
+}
+
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
-  options: { value: string; label: string }[]
+  options: SelectOption[]
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
@@ -31,7 +37,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {...props}
         >
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option key={option.value} value={option.value} disabled={option.disabled}>
               {option.label}
             </option>
           ))}

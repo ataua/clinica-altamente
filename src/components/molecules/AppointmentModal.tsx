@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Input } from '@/components/atoms/Input'
 import { Select } from '@/components/atoms/Select'
 import { Button } from '@/components/atoms/Button'
 import { AppointmentStatusBadge } from '@/components/atoms/AppointmentStatusBadge'
@@ -73,6 +72,22 @@ const statusOptions = [
   { value: 'NO_SHOW', label: 'Não Compareceu' },
 ]
 
+function generateTimeSlots() {
+  const slots: { value: string; label: string; disabled?: boolean }[] = []
+  for (let hour = 8; hour <= 17; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const hourStr = hour.toString().padStart(2, '0')
+      const minStr = minute.toString().padStart(2, '0')
+      const value = `${hourStr}:${minStr}`
+      const label = `${hourStr}:${minStr}`
+      slots.push({ value, label })
+    }
+  }
+  return slots
+}
+
+const allTimeSlots = generateTimeSlots()
+
 export function AppointmentModal({
   isOpen,
   onClose,
@@ -93,6 +108,7 @@ export function AppointmentModal({
   const [scheduledDateTime, setScheduledDateTime] = useState('')
   const [notes, setNotes] = useState('')
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('')
+  const [occupiedSlots, setOccupiedSlots] = useState<string[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [initialized, setInitialized] = useState(false)
 
@@ -106,6 +122,13 @@ export function AppointmentModal({
     return appointmentTypes.filter((t) => t.specialtyId === selectedSpecialtyId)
   }, [appointmentTypes, selectedSpecialtyId])
 
+  const timeSlots = useMemo(() => {
+    return allTimeSlots.map((slot) => ({
+      ...slot,
+      disabled: occupiedSlots.includes(slot.value),
+    }))
+  }, [occupiedSlots])
+
   useEffect(() => {
     if (!initialized) {
       setInitialized(true)
@@ -116,6 +139,7 @@ export function AppointmentModal({
         setScheduledDateTime(initialData.scheduledDateTime.slice(0, 16))
         setNotes(initialData.notes || '')
         setSelectedSpecialtyId('')
+        setOccupiedSlots([])
       } else {
         setPatientId('')
         setProfessionalId('')
@@ -123,6 +147,7 @@ export function AppointmentModal({
         setScheduledDateTime(selectedSlot ? selectedSlot.slice(0, 16) : '')
         setNotes('')
         setSelectedSpecialtyId('')
+        setOccupiedSlots([])
       }
       setErrors({})
     }
@@ -133,6 +158,39 @@ export function AppointmentModal({
       setInitialized(false)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    const fetchOccupiedSlots = async () => {
+      if (!professionalId || !selectedSlot) {
+        setOccupiedSlots([])
+        return
+      }
+
+      try {
+        const date = selectedSlot.split('T')[0]
+        const res = await fetch(`/api/appointments/slots?professionalId=${professionalId}&date=${date}`)
+        if (res.ok) {
+          const data = await res.json()
+          const occupied = (data.data?.slots || []).map((slot: string) => {
+            const d = new Date(slot)
+            const hours = d.getHours().toString().padStart(2, '0')
+            const minutes = d.getMinutes().toString().padStart(2, '0')
+            return `${hours}:${minutes}`
+          })
+          setOccupiedSlots(occupied)
+        }
+      } catch (error) {
+        console.error('Error fetching slots:', error)
+        setOccupiedSlots([])
+      }
+    }
+
+    if (professionalId && selectedSlot) {
+      fetchOccupiedSlots()
+    } else {
+      setOccupiedSlots([])
+    }
+  }, [professionalId, selectedSlot])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -242,24 +300,33 @@ export function AppointmentModal({
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <Input
-                  id="scheduledDate"
-                  type="date"
-                  label="Data"
-                  value={selectedSlot ? selectedSlot.split('T')[0] : scheduledDateTime.split('T')[0] || ''}
-                  disabled
-                />
-                <Input
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Data</label>
+                  <input
+                    type="date"
+                    value={selectedSlot ? selectedSlot.split('T')[0] : scheduledDateTime.split('T')[0] || ''}
+                    disabled
+                    className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                  />
+                </div>
+                <Select
                   id="scheduledTime"
-                  type="time"
                   label="Horário *"
                   value={scheduledDateTime ? scheduledDateTime.split('T')[1]?.slice(0, 5) : ''}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                     const datePart = selectedSlot ? selectedSlot.split('T')[0] : scheduledDateTime.split('T')[0]
-                    if (datePart) {
+                    if (datePart && e.target.value) {
                       setScheduledDateTime(`${datePart}T${e.target.value}:00.000Z`)
                     }
                   }}
+                  options={[
+                    { value: '', label: 'Selecione...' },
+                    ...timeSlots.map((slot) => ({
+                      value: slot.value,
+                      label: slot.disabled ? `${slot.label} (ocupado)` : slot.label,
+                      disabled: slot.disabled,
+                    }))
+                  ]}
                   error={errors.scheduledDateTime}
                 />
               </div>
