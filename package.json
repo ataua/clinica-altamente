@@ -21,6 +21,9 @@
     "test:coverage": "bunx dotenv -e .env.test -- bun run test:setup && bun test --coverage",
     "test:setup": "bunx prisma db push",
     "test:clean": "docker stop clinica-altamente-db-test && docker rm clinica-altamente-db-test",
+    "test:e2e": "bunx playwright test",
+    "test:e2e:ui": "bunx playwright test --ui",
+    "test:e2e:headed": "bunx playwright test --headed",
     "db:generate": "bunx prisma generate",
     "db:push": "bunx prisma db push",
     "db:studio": "bunx prisma studio",
@@ -51,6 +54,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.19.37",

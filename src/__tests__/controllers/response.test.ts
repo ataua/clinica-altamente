@@ -65,7 +65,7 @@ describe('Response Helpers', () => {
       expect(response.status).toBe(409)
     })
 
-    it('should handle unknown errors', () => {
+    it('should handle unknown errors', async () => {
       const response = error(new Error('Unknown'))
 
       expect(response.status).toBe(500)
