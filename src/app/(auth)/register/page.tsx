@@ -25,6 +25,22 @@ export default function RegisterPage() {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  const validatePassword = (password: string): string | null => {
+    if (!password || password.length < 8) {
+      return "Senha deve ter pelo menos 8 caracteres";
+    }
+    if (!/[A-Z]/.test(password)) {
+      return "Senha deve conter pelo menos uma letra maiúscula";
+    }
+    if (!/[a-z]/.test(password)) {
+      return "Senha deve conter pelo menos uma letra minúscula";
+    }
+    if (!/[0-9]/.test(password)) {
+      return "Senha deve conter pelo menos um número";
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
@@ -35,8 +51,9 @@ export default function RegisterPage() {
     if (!formData.email || !formData.email.includes("@")) {
       newErrors.email = "Email inválido";
     }
-    if (!formData.password || formData.password.length < 6) {
-      newErrors.password = "Senha deve ter pelo menos 6 caracteres";
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      newErrors.password = passwordError;
     }
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "As senhas não coincidem";
@@ -182,7 +199,7 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleChange}
                 className={`${getInputClass("password")} pr-10`}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres, com letras e números"
               />
               <button
                 type="button"

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Disallow API routes
+Disallow: /api/
+
+# Disallow auth routes
+Disallow: /login
+Disallow: /register
+
+# Sitemap
+Sitemap: https://clinica-altamente.com/sitemap.xml

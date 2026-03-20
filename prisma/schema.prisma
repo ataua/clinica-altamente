@@ -247,6 +247,8 @@ model Appointment {
   @@index([professionalId, status, scheduledDateTime])
   @@index([scheduledDateTime])
   @@index([patientId])
+  @@index([patientId, scheduledDateTime])
+  @@index([professionalId, scheduledDateTime])
 }
 
 model Attendance {

@@ -39,38 +39,50 @@ export class PatientService {
       prisma.patient.count({ where }),
     ])
 
-    const patientsWithResponsible = await Promise.all(
-      patients.map(async (patient) => {
-        const responsibleContact = await prisma.responsibleContact.findFirst({
-          where: { phone: patient.emergencyPhone || '' },
+    const emergencyPhones = patients
+      .map(p => p.emergencyPhone)
+      .filter((phone): phone is string => !!phone)
+
+    const responsibleContacts = emergencyPhones.length > 0
+      ? await prisma.responsibleContact.findMany({
+          where: { phone: { in: emergencyPhones } },
         })
-        let parsedAddress = null
-        if (patient.address) {
-          try {
-            parsedAddress = typeof patient.address === 'string' 
-              ? JSON.parse(patient.address) 
-              : patient.address
-          } catch {
-            parsedAddress = null
-          }
-        }
-        return {
-          ...patient,
-          address: parsedAddress,
-          notes: patient.observations,
-          name: patient.user?.name,
-          email: patient.user?.email,
-          responsibleContact: responsibleContact ? {
-            id: responsibleContact.id,
-            name: responsibleContact.name,
-            email: responsibleContact.email,
-            phone: responsibleContact.phone,
-            cpf: responsibleContact.cpf,
-            relationship: responsibleContact.relationship,
-          } : null,
-        }
-      })
+      : []
+
+    const responsibleContactsMap = new Map(
+      responsibleContacts.map(rc => [rc.phone, rc])
     )
+
+    const patientsWithResponsible = patients.map((patient) => {
+      const responsibleContact = patient.emergencyPhone
+        ? responsibleContactsMap.get(patient.emergencyPhone)
+        : null
+      let parsedAddress = null
+      if (patient.address) {
+        try {
+          parsedAddress = typeof patient.address === 'string' 
+            ? JSON.parse(patient.address) 
+            : patient.address
+        } catch {
+          parsedAddress = null
+        }
+      }
+      return {
+        ...patient,
+        address: parsedAddress,
+        notes: patient.observations,
+        name: patient.user?.name,
+        email: patient.user?.email,
+        responsibleContact: responsibleContact ? {
+          id: responsibleContact.id,
+          name: responsibleContact.name,
+          email: responsibleContact.email,
+          phone: responsibleContact.phone,
+          cpf: responsibleContact.cpf,
+          relationship: responsibleContact.relationship,
+        } : null,
+      }
+    })
 
     return {
       patients: patientsWithResponsible,
