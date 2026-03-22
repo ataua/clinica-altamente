@@ -178,7 +178,7 @@ export default function RegisterPage() {
             >
               <option value="PATIENT">Paciente</option>
               <option value="PROFESSIONAL">Profissional</option>
-              <option value="RECEPTIONIST">Recepcionista</option>
+              <option value="SECRETARY">Recepcionista</option>
               <option value="COORDINATOR">Coordenador</option>
               <option value="ADMIN">Administrador</option>
             </select>
