@@ -199,6 +199,21 @@ export default function Dashboard() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               <Link
+                href="/patients"
+                className="flex items-center gap-4 p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow"
+              >
+                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0M7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Pacientes</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Gerenciar pacientes</p>
+                </div>
+              </Link>
+
+              <Link
                 href="/calendar"
                 className="flex items-center gap-4 p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow"
               >
@@ -210,21 +225,6 @@ export default function Dashboard() {
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">Agendamentos</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Gerenciar agendamentos</p>
-                </div>
-              </Link>
-
-              <Link
-                href="/admin/professionals"
-                className="flex items-center gap-4 p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow"
-              >
-                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Profissionais</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Gerenciar profissionais</p>
                 </div>
               </Link>
             </div>
