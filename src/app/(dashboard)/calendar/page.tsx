@@ -44,6 +44,9 @@ export default function CalendarPage() {
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
+  const [patientLetters, setPatientLetters] = useState<string[]>([])
+  const [selectedPatientLetter, setSelectedPatientLetter] = useState<string>('')
+  const [patientSearch, setPatientSearch] = useState<string>('')
   const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,11 +84,19 @@ export default function CalendarPage() {
         params.set('professionalId', filterProfessionalId)
       }
 
+      const patientParams = new URLSearchParams()
+      if (selectedPatientLetter) {
+        patientParams.set('letter', selectedPatientLetter)
+      } else if (patientSearch) {
+        patientParams.set('search', patientSearch)
+      }
+      patientParams.set('limit', '50')
+
       const [appointmentsRes, patientsRes, professionalsRes, specialtiesRes] = await Promise.all([
         fetch(`/api/appointments?${params}`),
-        fetch('/api/patients?limit=100'),
-        fetch('/api/appointments/professionals'),
-        fetch('/api/specialties?isActive=true'),
+        fetch(`/api/patients/select?${patientParams}`),
+        fetch('/api/professionals/select'),
+        fetch('/api/specialties/select?isActive=true'),
       ])
 
       const appointmentsData = await appointmentsRes.json()
@@ -97,24 +108,27 @@ export default function CalendarPage() {
         setAppointments(appointmentsData.data || [])
       }
       if (patientsRes.ok) {
-        const patientsList = patientsData.data?.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })) || []
-        setPatients(patientsList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
+        const patientsList = (patientsData.data?.patients || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name }))
+        setPatients(patientsList)
+        if (patientsData.data?.letters) {
+          setPatientLetters(patientsData.data.letters)
+        }
       }
       if (specialtiesRes.ok) {
-        const specialtiesList = (specialtiesData.data || []).map((s: { id: string; name: string }) => ({
+        const specialtiesList = (specialtiesData.data?.specialties || []).map((s: { id: string; name: string }) => ({
           id: s.id,
           name: s.name
         }))
-        setSpecialties(specialtiesList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
+        setSpecialties(specialtiesList)
       }
       if (professionalsRes.ok) {
-        const professionalsList = (professionalsData.data || []).map((p: { id: string; user: { name: string }; specialtyId?: string | null; userId?: string }) => ({
+        const professionalsList = (professionalsData.data?.professionals || []).map((p: { id: string; name: string; specialtyId?: string | null; userId?: string }) => ({
           id: p.id,
-          name: p.user.name,
+          name: p.name,
           specialtyId: p.specialtyId,
           userId: p.userId
         }))
-        setProfessionals(professionalsList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
+        setProfessionals(professionalsList)
         
         if (session?.user?.role === 'PROFESSIONAL' && session?.user?.id) {
           const myProfessional = professionalsList.find((p: Professional) => p.userId === session.user.id)
@@ -131,7 +145,7 @@ export default function CalendarPage() {
     } finally {
       setLoading(false)
     }
-  }, [session?.user?.id, session?.user?.role, filterPatientId, filterProfessionalId])
+  }, [session?.user?.id, session?.user?.role, filterPatientId, filterProfessionalId, selectedPatientLetter, patientSearch])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -305,6 +319,8 @@ export default function CalendarPage() {
   const clearFilters = () => {
     setFilterPatientId('')
     setFilterProfessionalId('')
+    setPatientSearch('')
+    setSelectedPatientLetter('')
     fetchData()
   }
 
@@ -334,19 +350,54 @@ export default function CalendarPage() {
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Paciente:</label>
-                <select
-                  value={filterPatientId}
-                  onChange={(e) => handleFilterPatientChange(e.target.value)}
-                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-                >
-                  <option value="">Todos</option>
-                  {patients.map((patient) => (
-                    <option key={patient.id} value={patient.id}>
-                      {patient.name}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  value={patientSearch}
+                  onChange={(e) => {
+                    setPatientSearch(e.target.value)
+                    setSelectedPatientLetter('')
+                  }}
+                  placeholder="Buscar paciente..."
+                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
+                />
               </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    setSelectedPatientLetter('')
+                    setPatientSearch('')
+                    fetchData()
+                  }}
+                  className={`px-2 py-1 text-xs rounded ${!selectedPatientLetter && !patientSearch ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                >
+                  Todos
+                </button>
+                {patientLetters.map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => {
+                      setSelectedPatientLetter(letter)
+                      setPatientSearch('')
+                      fetchData()
+                    }}
+                    className={`px-2 py-1 text-xs rounded ${selectedPatientLetter === letter ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+              <select
+                value={filterPatientId}
+                onChange={(e) => handleFilterPatientChange(e.target.value)}
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+              >
+                <option value="">Selecione...</option>
+                {patients.map((patient) => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.name}
+                  </option>
+                ))}
+              </select>
               <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Profissional:</label>
                 <select
