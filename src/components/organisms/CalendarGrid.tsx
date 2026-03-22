@@ -9,7 +9,6 @@ interface Appointment {
   scheduledDateTime: string
   endDateTime: string
   status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
-  appointmentType: string
 }
 
 interface CalendarGridProps {

@@ -5,7 +5,6 @@ interface CalendarEventProps {
   title: string
   time: string
   status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
-  type: string
   onClick?: (id: string) => void
 }
 
@@ -18,7 +17,7 @@ const statusColors: Record<string, string> = {
   NO_SHOW: 'bg-orange-100 dark:bg-orange-900 border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-200',
 }
 
-export function CalendarEvent({ id, title, time, status, type, onClick }: CalendarEventProps) {
+export function CalendarEvent({ id, title, time, status, onClick }: CalendarEventProps) {
   return (
     <div
       onClick={() => onClick?.(id)}
@@ -26,7 +25,6 @@ export function CalendarEvent({ id, title, time, status, type, onClick }: Calend
     >
       <p className="font-medium truncate">{title}</p>
       <p className="opacity-75">{time}</p>
-      <p className="opacity-75 truncate">{type}</p>
     </div>
   )
 }

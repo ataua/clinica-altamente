@@ -38,10 +38,12 @@ cp .env.example .env
 ```
 
 Variáveis necessárias:
+
 - `DATABASE_URL` - Connection string do PostgreSQL
 - `AUTH_SECRET` - Secret para NextAuth (gerar com `openssl rand -base64 32`)
 
 Para testes:
+
 - `TEST_DATABASE_URL` - Connection string do banco de testes (opcional)
 
 ### 3. Iniciar o Servidor
@@ -54,19 +56,19 @@ Acesse: http://localhost:3000
 
 ## Scripts Disponíveis
 
-| Comando | Descrição |
-|---------|-----------|
-| `bun run dev` | Iniciar servidor de desenvolvimento |
-| `bun run build` | Build de produção |
-| `bun run start` | Iniciar servidor de produção |
-| `bun run lint` | Verificar código |
-| `bun run db:generate` | Gerar Prisma Client |
-| `bun run db:push` | Sincronizar schema com banco |
-| `bun run db:studio` | Abrir Prisma Studio |
-| `bun run db:migrate` | Criar migração |
-| `bun run db:seed` | Popular banco com dados iniciais |
-| `bun test` | Executar testes |
-| `bun test --coverage` | Executar testes com cobertura |
+| Comando               | Descrição                           |
+| --------------------- | ----------------------------------- |
+| `bun run dev`         | Iniciar servidor de desenvolvimento |
+| `bun run build`       | Build de produção                   |
+| `bun run start`       | Iniciar servidor de produção        |
+| `bun run lint`        | Verificar código                    |
+| `bun run db:generate` | Gerar Prisma Client                 |
+| `bun run db:push`     | Sincronizar schema com banco        |
+| `bun run db:studio`   | Abrir Prisma Studio                 |
+| `bun run db:migrate`  | Criar migração                      |
+| `bun run db:seed`     | Popular banco com dados iniciais    |
+| `bun test`            | Executar testes                     |
+| `bun test --coverage` | Executar testes com cobertura       |
 
 ## Estrutura do Projeto
 
@@ -138,25 +140,25 @@ A API segue o **Richardson Maturity Model nível 3** com **HATEOAS** (Hypermedia
 
 ### Rotas Disponíveis
 
-| Recurso | GET | POST | PUT | DELETE |
-|---------|-----|------|-----|--------|
-| `/api/users` | Listar | Criar | - | - |
-| `/api/users/:id` | Detalhes | - | Atualizar | Excluir |
-| `/api/patients` | Listar | Criar | - | - |
-| `/api/patients/:id` | Detalhes | - | Atualizar | Excluir |
-| `/api/professionals` | Listar | Criar | - | - |
-| `/api/professionals/:id` | Detalhes | - | Atualizar | Excluir |
-| `/api/appointment-types` | Listar | Criar | - | - |
-| `/api/appointment-types/:id` | - | - | Atualizar | Excluir |
-| `/api/appointments` | Listar | Criar | - | - |
-| `/api/appointments/:id` | Detalhes | - | Atualizar | Excluir |
-| `/api/appointments/:id/cancel` | - | Cancelar | - | - |
-| `/api/appointments/:id/reschedule` | - | Reagendar | - | - |
-| `/api/attendances` | Listar | Criar | - | - |
-| `/api/attendances/:id/start` | - | Iniciar | - | - |
-| `/api/attendances/:id/complete` | - | Finalizar | - | - |
-| `/api/responsibles` | Listar | Criar | - | - |
-| `/api/responsibles/:id` | - | - | Atualizar | - |
+| Recurso                            | GET      | POST      | PUT       | DELETE  |
+| ---------------------------------- | -------- | --------- | --------- | ------- |
+| `/api/users`                       | Listar   | Criar     | -         | -       |
+| `/api/users/:id`                   | Detalhes | -         | Atualizar | Excluir |
+| `/api/patients`                    | Listar   | Criar     | -         | -       |
+| `/api/patients/:id`                | Detalhes | -         | Atualizar | Excluir |
+| `/api/professionals`               | Listar   | Criar     | -         | -       |
+| `/api/professionals/:id`           | Detalhes | -         | Atualizar | Excluir |
+| `/api/appointment-types`           | Listar   | Criar     | -         | -       |
+| `/api/appointment-types/:id`       | -        | -         | Atualizar | Excluir |
+| `/api/appointments`                | Listar   | Criar     | -         | -       |
+| `/api/appointments/:id`            | Detalhes | -         | Atualizar | Excluir |
+| `/api/appointments/:id/cancel`     | -        | Cancelar  | -         | -       |
+| `/api/appointments/:id/reschedule` | -        | Reagendar | -         | -       |
+| `/api/attendances`                 | Listar   | Criar     | -         | -       |
+| `/api/attendances/:id/start`       | -        | Iniciar   | -         | -       |
+| `/api/attendances/:id/complete`    | -        | Finalizar | -         | -       |
+| `/api/responsibles`                | Listar   | Criar     | -         | -       |
+| `/api/responsibles/:id`            | -        | -         | Atualizar | -       |
 
 ## Autenticação
 
@@ -181,27 +183,34 @@ bun test --coverage
 ```
 
 Banco de testes:
+
 - Container: `db_test` (porta 5433)
 - Banco: `clinica-altamente_test`
 
 ## Modelo de Dados
 
 ### User
+
 Usuários do sistema com autenticação.
 
 ### Patient
+
 Pacientes com dados pessoais e vínculo com User.
 
 ### Professional
+
 Profissionais de saúde com especialidade.
 
 ### Appointment
+
 Agendamentos com horário, paciente e profissional.
 
 ### Attendance
+
 Registros de atendimento com diagnóstico e plano de tratamento.
 
 ### ResponsibleContact
+
 Contatos de emergência vinculados a pacientes.
 
 ## Links Úteis

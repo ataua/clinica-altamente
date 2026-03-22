@@ -98,7 +98,7 @@ export function getAppointmentConfirmationTemplate(data: ReminderTemplateData): 
 `
 }
 
-export function getAppointmentCancellationTemplate(data: Omit<ReminderTemplateData, 'appointmentType'> & { reason?: string }): string {
+export function getAppointmentCancellationTemplate(data: ReminderTemplateData & { reason?: string }): string {
   return `
 <!DOCTYPE html>
 <html>

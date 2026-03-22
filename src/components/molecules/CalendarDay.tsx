@@ -8,7 +8,6 @@ interface Appointment {
   scheduledDateTime: string
   endDateTime: string
   status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
-  appointmentType: string
 }
 
 interface CalendarDayProps {
@@ -46,7 +45,6 @@ export function CalendarDay({ date, appointments, isToday, isCurrentMonth, onEve
             title={apt.patientName}
             time={formatTime(apt.scheduledDateTime)}
             status={apt.status}
-            type={apt.appointmentType}
             onClick={onEventClick}
           />
         ))}

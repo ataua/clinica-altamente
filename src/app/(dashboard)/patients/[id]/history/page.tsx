@@ -13,9 +13,6 @@ interface Appointment {
   scheduledDateTime: string
   endDateTime: string
   status: string
-  appointmentType: {
-    name: string
-  }
   professional: {
     id: string
     user: {
@@ -246,7 +243,7 @@ export default function PatientHistoryPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {apt.appointmentType.name}
+                        Consulta
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {new Date(apt.scheduledDateTime).toLocaleString('pt-BR')}

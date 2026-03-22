@@ -345,7 +345,7 @@ export default function Dashboard() {
         {role === 'ADMIN' && (
           <>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Administración
+              Administração
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Link
@@ -364,17 +364,17 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                href="/admin/appointment-types"
+                href="/admin/professionals"
                 className="flex items-center gap-4 p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow"
               >
-                <div className="p-3 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Tipos de Agendamento</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Gerenciar tipos</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Profissionais</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Gerenciar profissionais</p>
                 </div>
               </Link>
 

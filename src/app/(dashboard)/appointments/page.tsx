@@ -13,7 +13,6 @@ interface Appointment {
   id: string
   patientName: string
   professionalName: string
-  appointmentType: string
   scheduledDateTime: string
   endDateTime: string
   status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
@@ -65,8 +64,7 @@ export default function AppointmentsPage() {
         if (searchTerm) {
           filtered = filtered.filter((apt: Appointment) =>
             apt.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            apt.professionalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            apt.appointmentType?.toLowerCase().includes(searchTerm.toLowerCase())
+            apt.professionalName?.toLowerCase().includes(searchTerm.toLowerCase())
           )
         }
         
@@ -255,7 +253,7 @@ export default function AppointmentsPage() {
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <Input
-              placeholder="Buscar por paciente, profissional ou tipo..."
+              placeholder="Buscar por paciente ou profissional..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchAppointments()}
@@ -296,9 +294,6 @@ export default function AppointmentsPage() {
                       Profissional
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Tipo
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Status
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
@@ -317,9 +312,6 @@ export default function AppointmentsPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                         {apt.professionalName}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                        {apt.appointmentType}
                       </td>
                       <td className="px-4 py-3">
                         <AppointmentStatusBadge status={apt.status} />
