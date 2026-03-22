@@ -24,25 +24,12 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [patientsRes, appointmentsRes, professionalsRes] = await Promise.all([
-          fetch('/api/patients?limit=1'),
-          fetch('/api/appointments?limit=1'),
-          fetch('/api/professionals?limit=1&isActive=true'),
-        ])
+        const res = await fetch('/api/dashboard/stats')
+        const data = await res.json()
 
-        const patientsData = await patientsRes.json()
-        const appointmentsData = await appointmentsRes.json()
-        const professionalsData = await professionalsRes.json()
-
-        setStats({
-          totalPatients: patientsData.pagination?.total || 0,
-          totalAppointments: appointmentsData.pagination?.total || 0,
-          todayAppointments: appointmentsData.data?.filter((apt: { scheduledDateTime: string }) => {
-            const today = new Date().toISOString().split('T')[0]
-            return apt.scheduledDateTime.startsWith(today)
-          }).length || 0,
-          activeProfessionals: professionalsData.pagination?.total || 0,
-        })
+        if (res.ok) {
+          setStats(data.data)
+        }
       } catch (error) {
         console.error('Error fetching stats:', error)
       } finally {
