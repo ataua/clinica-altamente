@@ -56,6 +56,8 @@ export default function CalendarPage() {
   const [selectedSlot, setSelectedSlot] = useState<string | undefined>()
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
+  const [filterPatientId, setFilterPatientId] = useState<string>('')
+  const [filterProfessionalId, setFilterProfessionalId] = useState<string>('')
 
   const canCreateAppointments = session?.user?.role === 'ADMIN' || session?.user?.role === 'SECRETARY'
   const isProfessionalOnly = session?.user?.role === 'PROFESSIONAL'
@@ -71,6 +73,13 @@ export default function CalendarPage() {
       params.set('startDate', startOfMonth.toISOString())
       params.set('endDate', endOfMonth.toISOString())
       params.set('limit', '100')
+
+      if (filterPatientId) {
+        params.set('patientId', filterPatientId)
+      }
+      if (filterProfessionalId) {
+        params.set('professionalId', filterProfessionalId)
+      }
 
       const [appointmentsRes, patientsRes, professionalsRes, specialtiesRes] = await Promise.all([
         fetch(`/api/appointments?${params}`),
@@ -122,7 +131,7 @@ export default function CalendarPage() {
     } finally {
       setLoading(false)
     }
-  }, [session?.user?.id, session?.user?.role])
+  }, [session?.user?.id, session?.user?.role, filterPatientId, filterProfessionalId])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -281,6 +290,24 @@ export default function CalendarPage() {
     setSelectedDate(undefined)
   }
 
+  const handleFilterPatientChange = (patientId: string) => {
+    setFilterPatientId(patientId)
+    setFilterProfessionalId('')
+    fetchData()
+  }
+
+  const handleFilterProfessionalChange = (professionalId: string) => {
+    setFilterProfessionalId(professionalId)
+    setFilterPatientId('')
+    fetchData()
+  }
+
+  const clearFilters = () => {
+    setFilterPatientId('')
+    setFilterProfessionalId('')
+    fetchData()
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -304,6 +331,46 @@ export default function CalendarPage() {
                 </p>
               )}
             </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">Paciente:</label>
+              <select
+                value={filterPatientId}
+                onChange={(e) => handleFilterPatientChange(e.target.value)}
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos os pacientes</option>
+                {patients.map((patient) => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">Profissional:</label>
+              <select
+                value={filterProfessionalId}
+                onChange={(e) => handleFilterProfessionalChange(e.target.value)}
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos os profissionais</option>
+                {professionals.map((professional) => (
+                  <option key={professional.id} value={professional.id}>
+                    {professional.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {(filterPatientId || filterProfessionalId) && (
+              <button
+                onClick={clearFilters}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+              >
+                Limpar filtros
+              </button>
+            )}
             {canCreateAppointments && (
               <Button onClick={() => { 
                 setSelectedAppointment(undefined); 
