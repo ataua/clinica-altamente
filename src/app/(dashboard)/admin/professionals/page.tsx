@@ -11,6 +11,7 @@ import { toast } from '@/components/ui/toast'
 interface Specialty {
   id: string
   name: string
+  description?: string | null
   isActive?: boolean
 }
 
@@ -32,26 +33,120 @@ interface User {
   role: string
 }
 
+interface SpecialtyModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: (specialty: Specialty) => void
+}
+
+function SpecialtyModal({ isOpen, onClose, onSuccess }: SpecialtyModalProps) {
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (isOpen) {
+      setName('')
+      setDescription('')
+      setErrors({})
+    }
+  }, [isOpen])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!name.trim()) {
+      setErrors({ name: 'Nome é obrigatório' })
+      return
+    }
+
+    try {
+      setLoading(true)
+      const res = await fetch('/api/specialties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim() || undefined,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        toast.success('Especialidade criada!')
+        onSuccess(data.data)
+        onClose()
+      } else {
+        const error = await res.json()
+        toast.error('Erro', { description: error.message || error.error })
+      }
+    } catch (error) {
+      console.error('Error creating specialty:', error)
+      toast.error('Erro ao criar especialidade')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+          Nova Especialidade
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            id="specialtyName"
+            label="Nome *"
+            value={name}
+            onChange={(e) => { setName(e.target.value); setErrors({}) }}
+            placeholder="Ex: Psicologia"
+            error={errors.name}
+          />
+          <Input
+            id="specialtyDesc"
+            label="Descrição"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Breve descrição (opcional)"
+          />
+          <div className="flex gap-3 pt-4">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1" disabled={loading}>
+              {loading ? 'Criando...' : 'Criar'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export default function ProfessionalsPage() {
   const { status, data: session } = useSession()
   const router = useRouter()
   const [professionals, setProfessionals] = useState<Professional[]>([])
+  const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSpecialtyModalOpen, setIsSpecialtyModalOpen] = useState(false)
   const [editingProfessional, setEditingProfessional] = useState<Professional | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const [userId, setUserId] = useState('')
   const [specialtyId, setSpecialtyId] = useState('')
   const [specialties, setSpecialties] = useState<Specialty[]>([])
+  const [specialtyFilter, setSpecialtyFilter] = useState('')
   const [licenseNumber, setLicenseNumber] = useState('')
   const [bio, setBio] = useState('')
-
-  const [showNewSpecialty, setShowNewSpecialty] = useState(false)
-  const [newSpecialtyName, setNewSpecialtyName] = useState('')
-  const [newSpecialtyDesc, setNewSpecialtyDesc] = useState('')
-  const [creatingSpecialty, setCreatingSpecialty] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -67,6 +162,7 @@ export default function ProfessionalsPage() {
       const data = await res.json()
       if (res.ok) {
         setProfessionals(data.data || [])
+        setFilteredProfessionals(data.data || [])
       }
     } catch (error) {
       console.error('Error fetching professionals:', error)
@@ -96,50 +192,20 @@ export default function ProfessionalsPage() {
       const res = await fetch('/api/specialties?limit=100')
       const data = await res.json()
       if (res.ok) {
-        setSpecialties((data.data || []).filter((s: Specialty) => s.isActive !== false))
+        setSpecialties(data.data || [])
       }
     } catch (error) {
       console.error('Error fetching specialties:', error)
     }
   }
 
-  const handleCreateSpecialty = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newSpecialtyName.trim()) {
-      toast.error('Nome da especialidade é obrigatório')
-      return
+  useEffect(() => {
+    if (specialtyFilter) {
+      setFilteredProfessionals(professionals.filter(p => p.specialty?.id === specialtyFilter))
+    } else {
+      setFilteredProfessionals(professionals)
     }
-
-    try {
-      setCreatingSpecialty(true)
-      const res = await fetch('/api/specialties', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newSpecialtyName.trim(),
-          description: newSpecialtyDesc.trim() || undefined,
-        }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        await fetchSpecialties()
-        setSpecialtyId(data.data.id)
-        setShowNewSpecialty(false)
-        setNewSpecialtyName('')
-        setNewSpecialtyDesc('')
-        toast.success('Especialidade criada!')
-      } else {
-        const error = await res.json()
-        toast.error('Erro', { description: error.message || error.error })
-      }
-    } catch (error) {
-      console.error('Error creating specialty:', error)
-      toast.error('Erro ao criar especialidade')
-    } finally {
-      setCreatingSpecialty(false)
-    }
-  }
+  }, [specialtyFilter, professionals])
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -153,6 +219,11 @@ export default function ProfessionalsPage() {
       fetchAvailableUsers()
     }
   }, [isModalOpen, editingProfessional, fetchAvailableUsers])
+
+  const handleSpecialtyCreated = (specialty: Specialty) => {
+    fetchSpecialties()
+    setSpecialtyId(specialty.id)
+  }
 
   const handleOpenModal = (professional?: Professional) => {
     if (professional) {
@@ -168,18 +239,12 @@ export default function ProfessionalsPage() {
       setLicenseNumber('')
       setBio('')
     }
-    setShowNewSpecialty(false)
-    setNewSpecialtyName('')
-    setNewSpecialtyDesc('')
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setEditingProfessional(null)
-    setShowNewSpecialty(false)
-    setNewSpecialtyName('')
-    setNewSpecialtyDesc('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -198,7 +263,7 @@ export default function ProfessionalsPage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            specialtyId: specialtyId || undefined,
+            specialtyId: specialtyId || null,
             licenseNumber: licenseNumber || undefined,
             bio: bio || undefined,
           }),
@@ -218,7 +283,7 @@ export default function ProfessionalsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId,
-            specialtyId: specialtyId || undefined,
+            specialtyId: specialtyId || null,
             licenseNumber: licenseNumber || undefined,
             bio: bio || undefined,
           }),
@@ -295,14 +360,34 @@ export default function ProfessionalsPage() {
                 Gerencie os profissionais da clínica
               </p>
             </div>
-            <Button onClick={() => handleOpenModal()}>
-              + Novo Profissional
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsSpecialtyModalOpen(true)}>
+                + Especialidade
+              </Button>
+              <Button onClick={() => handleOpenModal()}>
+                + Novo Profissional
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6 flex gap-4 items-end">
+          <div className="flex-1">
+            <Select
+              id="specialtyFilter"
+              label="Filtrar por Especialidade"
+              value={specialtyFilter}
+              onChange={(e) => setSpecialtyFilter(e.target.value)}
+              options={[
+                { value: '', label: 'Todas as especialidades' },
+                ...specialties.map(s => ({ value: s.id, label: s.name }))
+              ]}
+            />
+          </div>
+        </div>
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
@@ -328,14 +413,14 @@ export default function ProfessionalsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {professionals.length === 0 ? (
+              {filteredProfessionals.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    Nenhum profissional cadastrado
+                    Nenhum profissional encontrado
                   </td>
                 </tr>
               ) : (
-                professionals.map((professional) => (
+                filteredProfessionals.map((professional) => (
                   <tr key={professional.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-medium text-gray-900 dark:text-white">
@@ -388,6 +473,12 @@ export default function ProfessionalsPage() {
         </div>
       </main>
 
+      <SpecialtyModal
+        isOpen={isSpecialtyModalOpen}
+        onClose={() => setIsSpecialtyModalOpen(false)}
+        onSuccess={handleSpecialtyCreated}
+      />
+
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/50" onClick={handleCloseModal} />
@@ -413,71 +504,29 @@ export default function ProfessionalsPage() {
                 />
               )}
 
-              {!showNewSpecialty ? (
-                <div>
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1">
-                      <Select
-                        id="specialty"
-                        label="Especialidade"
-                        value={specialtyId}
-                        onChange={(e) => setSpecialtyId(e.target.value)}
-                        options={[
-                          { value: '', label: 'Selecione (opcional)' },
-                          ...specialties.map(s => ({ value: s.id, label: s.name }))
-                        ]}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowNewSpecialty(true)}
-                      className="mb-0.5 text-sm"
-                    >
-                      + Nova
-                    </Button>
-                  </div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Select
+                    id="specialty"
+                    label="Especialidade"
+                    value={specialtyId}
+                    onChange={(e) => setSpecialtyId(e.target.value)}
+                    options={[
+                      { value: '', label: 'Selecione (opcional)' },
+                      ...specialties.map(s => ({ value: s.id, label: s.name }))
+                    ]}
+                  />
                 </div>
-              ) : (
-                <div className="border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
-                  <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
-                    Nova Especialidade
-                  </h4>
-                  <form onSubmit={handleCreateSpecialty} className="space-y-3">
-                    <Input
-                      id="newSpecialtyName"
-                      label="Nome *"
-                      value={newSpecialtyName}
-                      onChange={(e) => setNewSpecialtyName(e.target.value)}
-                      placeholder="Ex: Psicologia"
-                    />
-                    <Input
-                      id="newSpecialtyDesc"
-                      label="Descrição"
-                      value={newSpecialtyDesc}
-                      onChange={(e) => setNewSpecialtyDesc(e.target.value)}
-                      placeholder="Breve descrição (opcional)"
-                    />
-                    <div className="flex gap-2">
-                      <Button type="submit" size="sm" disabled={creatingSpecialty}>
-                        {creatingSpecialty ? 'Criando...' : 'Criar'}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setShowNewSpecialty(false)
-                          setNewSpecialtyName('')
-                          setNewSpecialtyDesc('')
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSpecialtyModalOpen(true)}
+                  className="mb-0.5"
+                >
+                  + Nova
+                </Button>
+              </div>
 
               <Input
                 id="licenseNumber"
