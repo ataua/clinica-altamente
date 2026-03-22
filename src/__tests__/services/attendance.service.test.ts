@@ -6,7 +6,6 @@ import { AttendanceStatus } from '@prisma/client'
 describe('AttendanceService', () => {
   let testPatientId: string
   let testProfessionalId: string
-  let testAppointmentTypeId: string
   let testAppointmentId: string
 
   beforeAll(async () => {
@@ -38,16 +37,10 @@ describe('AttendanceService', () => {
     })
     testProfessionalId = professional.id
 
-    const aptType = await prisma.appointmentType.create({
-      data: { name: 'Avaliação', durationMinutes: 60, isActive: true },
-    })
-    testAppointmentTypeId = aptType.id
-
     const appointment = await prisma.appointment.create({
       data: {
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000),
         endDateTime: new Date(Date.now() + 86400000 + 3600000),
         status: 'SCHEDULED',
@@ -103,7 +96,7 @@ describe('AttendanceService', () => {
       ).rejects.toThrow('Agendamento não encontrado')
     })
 
-    it('should calculate end time based on appointment type duration', async () => {
+    it('should calculate end time based on default duration', async () => {
       const attendance = await attendanceService.create({
         appointmentId: testAppointmentId,
         patientId: testPatientId,

@@ -190,18 +190,6 @@ export class AppointmentController extends BaseController {
     }
   }
 
-  async getTypes(request: NextRequest) {
-    try {
-      await this.requireAuth()
-      const searchParams = request.nextUrl.searchParams
-      const specialtyId = searchParams.get('specialtyId') || undefined
-      const result = await appointmentService.getAppointmentTypes(specialtyId)
-      return success(result)
-    } catch (err) {
-      return error(err)
-    }
-  }
-
   async getProfessionals(request: NextRequest) {
     try {
       await this.requireAuth()

@@ -21,21 +21,12 @@ interface Professional {
   specialtyId?: string | null
 }
 
-interface AppointmentType {
-  id: string
-  name: string
-  durationMinutes: number
-  specialtyId?: string | null
-}
-
 interface Appointment {
   id: string
   patientId: string
   patientName: string
   professionalId: string
   professionalName: string
-  appointmentTypeId: string
-  appointmentType: string
   scheduledDateTime: string
   endDateTime: string
   status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
@@ -48,7 +39,6 @@ interface AppointmentModalProps {
   onSubmit: (data: {
     patientId: string
     professionalId: string
-    appointmentTypeId: string
     scheduledDateTime: string
     notes: string
   }) => void
@@ -57,7 +47,6 @@ interface AppointmentModalProps {
   initialData?: Appointment
   patients: Patient[]
   professionals: Professional[]
-  appointmentTypes: AppointmentType[]
   specialties?: Specialty[]
   selectedSlot?: string
   isLoading?: boolean
@@ -100,7 +89,6 @@ export function AppointmentModal({
   initialData,
   patients,
   professionals,
-  appointmentTypes,
   specialties = [],
   selectedSlot,
   isLoading,
@@ -110,7 +98,6 @@ export function AppointmentModal({
 }: AppointmentModalProps) {
   const [patientId, setPatientId] = useState('')
   const [professionalId, setProfessionalId] = useState('')
-  const [appointmentTypeId, setAppointmentTypeId] = useState('')
   const [scheduledDateTime, setScheduledDateTime] = useState('')
   const [notes, setNotes] = useState('')
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('')
@@ -125,11 +112,6 @@ export function AppointmentModal({
     return professionals.filter((p) => p.specialtyId === selectedSpecialtyId)
   }, [professionals, selectedSpecialtyId])
 
-  const filteredAppointmentTypes = useMemo(() => {
-    if (!selectedSpecialtyId) return appointmentTypes
-    return appointmentTypes.filter((t) => t.specialtyId === selectedSpecialtyId)
-  }, [appointmentTypes, selectedSpecialtyId])
-
   const timeSlots = useMemo(() => {
     return allTimeSlots.map((slot) => ({
       ...slot,
@@ -143,7 +125,6 @@ export function AppointmentModal({
       if (initialData) {
         setPatientId(initialData.patientId)
         setProfessionalId(initialData.professionalId)
-        setAppointmentTypeId(initialData.appointmentTypeId)
         setScheduledDateTime(initialData.scheduledDateTime.slice(0, 16))
         setNotes(initialData.notes || '')
         setSelectedSpecialtyId('')
@@ -151,7 +132,6 @@ export function AppointmentModal({
       } else {
         setPatientId('')
         setProfessionalId(effectiveProfessionalId)
-        setAppointmentTypeId('')
         setScheduledDateTime(selectedSlot ? selectedSlot.slice(0, 16) : '')
         setNotes('')
         setSelectedSpecialtyId('')
@@ -204,7 +184,6 @@ export function AppointmentModal({
     const newErrors: Record<string, string> = {}
     if (!patientId) newErrors.patientId = 'Paciente é obrigatório'
     if (!professionalId) newErrors.professionalId = 'Profissional é obrigatório'
-    if (!appointmentTypeId) newErrors.appointmentTypeId = 'Tipo de agendamento é obrigatório'
     if (!scheduledDateTime) newErrors.scheduledDateTime = 'Data/hora é obrigatória'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -216,7 +195,6 @@ export function AppointmentModal({
     onSubmit({
       patientId,
       professionalId,
-      appointmentTypeId,
       scheduledDateTime,
       notes,
     })
@@ -246,7 +224,6 @@ export function AppointmentModal({
             <div className="text-sm">
               <p><span className="text-gray-500">Data/Hora:</span> {formatDateTime(initialData.scheduledDateTime)}</p>
               <p><span className="text-gray-500">Profissional:</span> {initialData.professionalName}</p>
-              <p><span className="text-gray-500">Tipo:</span> {initialData.appointmentType}</p>
             </div>
           </div>
         )}
@@ -274,7 +251,6 @@ export function AppointmentModal({
                   onChange={(e) => {
                     setSelectedSpecialtyId(e.target.value)
                     setProfessionalId('')
-                    setAppointmentTypeId('')
                   }}
                   options={[
                     { value: '', label: 'Todas as especialidades' },
@@ -297,18 +273,6 @@ export function AppointmentModal({
                 }
                 error={errors.professionalId}
                 disabled={!!effectiveProfessionalId}
-              />
-
-              <Select
-                id="appointmentType"
-                label="Tipo de Agendamento *"
-                value={appointmentTypeId}
-                onChange={(e) => setAppointmentTypeId(e.target.value)}
-                options={[
-                  { value: '', label: selectedSpecialtyId ? 'Selecione uma especialidade primeiro' : 'Selecione...' },
-                  ...filteredAppointmentTypes.map((t) => ({ value: t.id, label: `${t.name} (${t.durationMinutes} min)` }))
-                ]}
-                error={errors.appointmentTypeId}
               />
 
               <div className="grid grid-cols-2 gap-4">

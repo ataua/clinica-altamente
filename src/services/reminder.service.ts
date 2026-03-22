@@ -29,7 +29,6 @@ export class ReminderService {
               user: true,
             },
           },
-          appointmentType: true,
         },
       })
 
@@ -52,7 +51,6 @@ export class ReminderService {
         patientName: appointment.patient.user.name || 'Paciente',
         appointmentDate,
         appointmentTime,
-        appointmentType: appointment.appointmentType.name,
         professionalName: appointment.professional.user.name || 'Profissional',
         clinicPhone: process.env.CLINIC_PHONE,
       }
@@ -94,7 +92,6 @@ export class ReminderService {
               user: true,
             },
           },
-          appointmentType: true,
         },
       })
 
@@ -117,7 +114,6 @@ export class ReminderService {
         patientName: appointment.patient.user.name || 'Paciente',
         appointmentDate,
         appointmentTime,
-        appointmentType: appointment.appointmentType.name,
         professionalName: appointment.professional.user.name || 'Profissional',
         clinicPhone: process.env.CLINIC_PHONE,
       })
@@ -160,7 +156,6 @@ export class ReminderService {
               user: true,
             },
           },
-          appointmentType: true,
         },
       })
 
@@ -183,7 +178,6 @@ export class ReminderService {
         patientName: appointment.patient.user.name || 'Paciente',
         appointmentDate,
         appointmentTime,
-        appointmentType: appointment.appointmentType.name,
         professionalName: appointment.professional.user.name || 'Profissional',
         clinicPhone: process.env.CLINIC_PHONE,
         reason,

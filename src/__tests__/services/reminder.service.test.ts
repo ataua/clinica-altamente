@@ -4,7 +4,6 @@ import { prisma, cleanupDatabase, uniqueEmail } from '../setup'
 
 describe('ReminderService', () => {
   let testProfessionalId: string
-  let testAppointmentTypeId: string
   let testPatientId: string
 
   beforeAll(async () => {
@@ -47,17 +46,6 @@ describe('ReminderService', () => {
       data: { userId: patientUser.id },
     })
     testPatientId = patient.id
-
-    const aptType = await prisma.appointmentType.create({
-      data: {
-        name: 'Avaliação',
-        description: 'Avaliação inicial',
-        durationMinutes: 60,
-        isActive: true,
-        specialtyId: specialty.id,
-      },
-    })
-    testAppointmentTypeId = aptType.id
   })
 
   beforeEach(async () => {
@@ -93,7 +81,6 @@ describe('ReminderService', () => {
         data: {
           patientId: patient.id,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
           scheduledDateTime: new Date(Date.now() + 86400000),
           endDateTime: new Date(Date.now() + 86400000 + 3600000),
           status: 'SCHEDULED',
@@ -135,7 +122,6 @@ describe('ReminderService', () => {
         data: {
           patientId: testPatientId,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
           scheduledDateTime: tomorrow,
           endDateTime: new Date(tomorrow.getTime() + 3600000),
           status: 'SCHEDULED',
@@ -159,7 +145,6 @@ describe('ReminderService', () => {
         data: {
           patientId: testPatientId,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
           scheduledDateTime: tomorrow,
           endDateTime: new Date(tomorrow.getTime() + 3600000),
           status: 'CANCELLED',

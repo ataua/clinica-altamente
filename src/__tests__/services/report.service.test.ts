@@ -6,7 +6,6 @@ import { AppointmentStatus } from '@prisma/client'
 describe('ReportService', () => {
   let testProfessionalId: string
   let testProfessionalId2: string
-  let testAppointmentTypeId: string
   let testPatientId1: string
   let testPatientId2: string
 
@@ -54,17 +53,6 @@ describe('ReportService', () => {
       },
     })
     testProfessionalId2 = professional2.id
-
-    const aptType = await prisma.appointmentType.create({
-      data: {
-        name: 'Avaliação',
-        description: 'Avaliação inicial',
-        durationMinutes: 60,
-        isActive: true,
-        specialtyId: specialty.id,
-      },
-    })
-    testAppointmentTypeId = aptType.id
   })
 
   beforeEach(async () => {
@@ -120,7 +108,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.COMPLETED,
@@ -131,7 +119,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date(baseDate.getTime() + 86400000),
           endDateTime: new Date(baseDate.getTime() + 86400000 + 3600000),
           status: AppointmentStatus.NO_SHOW,
@@ -142,7 +130,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId2,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date(baseDate.getTime() + 172800000),
           endDateTime: new Date(baseDate.getTime() + 172800000 + 3600000),
           status: AppointmentStatus.SCHEDULED,
@@ -163,7 +151,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date('2025-01-10T10:00:00Z'),
           endDateTime: new Date('2025-01-10T11:00:00Z'),
           status: AppointmentStatus.COMPLETED,
@@ -174,7 +162,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date('2025-01-20T10:00:00Z'),
           endDateTime: new Date('2025-01-20T11:00:00Z'),
           status: AppointmentStatus.COMPLETED,
@@ -196,7 +184,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.COMPLETED,
@@ -207,7 +195,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId2,
           professionalId: testProfessionalId2,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.COMPLETED,
@@ -236,7 +224,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.COMPLETED,
@@ -247,7 +235,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId2,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date(baseDate.getTime() + 86400000),
           endDateTime: new Date(baseDate.getTime() + 86400000 + 3600000),
           status: AppointmentStatus.NO_SHOW,
@@ -258,7 +246,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId2,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.COMPLETED,
@@ -283,7 +271,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.COMPLETED,
@@ -302,7 +290,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.NO_SHOW,
@@ -313,7 +301,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date(baseDate.getTime() + 86400000),
           endDateTime: new Date(baseDate.getTime() + 86400000 + 3600000),
           status: AppointmentStatus.NO_SHOW,
@@ -324,7 +312,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId2,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date(baseDate.getTime() + 172800000),
           endDateTime: new Date(baseDate.getTime() + 172800000 + 3600000),
           status: AppointmentStatus.NO_SHOW,
@@ -345,7 +333,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date('2025-01-05T10:00:00Z'),
           endDateTime: new Date('2025-01-05T11:00:00Z'),
           status: AppointmentStatus.NO_SHOW,
@@ -356,7 +344,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date('2025-01-20T10:00:00Z'),
           endDateTime: new Date('2025-01-20T11:00:00Z'),
           status: AppointmentStatus.NO_SHOW,
@@ -380,7 +368,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.COMPLETED,
@@ -391,7 +379,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: new Date(baseDate.getTime() + 86400000),
           endDateTime: new Date(baseDate.getTime() + 86400000 + 3600000),
           status: AppointmentStatus.NO_SHOW,
@@ -403,7 +391,7 @@ describe('ReportService', () => {
       expect(history.length).toBe(2)
       expect(history[0].patientName).toBe('Patient 1')
       expect(history[0].professionalName).toBe('Professional 1')
-      expect(history[0].appointmentType).toBe('Avaliação')
+      expect(history[0].patientName).toBe('Patient 1')
     })
 
     it('should respect limit parameter', async () => {
@@ -415,7 +403,7 @@ describe('ReportService', () => {
           data: {
             patientId: testPatientId1,
             professionalId: testProfessionalId,
-            appointmentTypeId: testAppointmentTypeId,
+            
             scheduledDateTime: date,
             endDateTime: new Date(date.getTime() + 3600000),
             status: AppointmentStatus.COMPLETED,
@@ -438,7 +426,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.COMPLETED,
@@ -449,7 +437,7 @@ describe('ReportService', () => {
         data: {
           patientId: testPatientId1,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
+          
           scheduledDateTime: baseDate,
           endDateTime: new Date(baseDate.getTime() + 3600000),
           status: AppointmentStatus.NO_SHOW,

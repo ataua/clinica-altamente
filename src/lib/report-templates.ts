@@ -13,7 +13,6 @@ export interface PatientReportData {
     date: string
     time: string
     professional: string
-    type: string
     status: string
     notes?: string
   }>
@@ -87,7 +86,6 @@ export function getIndividualReportTemplate(data: PatientReportData): string {
           <th>Data</th>
           <th>Hora</th>
           <th>Profissional</th>
-          <th>Tipo</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -97,7 +95,6 @@ export function getIndividualReportTemplate(data: PatientReportData): string {
             <td>${apt.date}</td>
             <td>${apt.time}</td>
             <td>${apt.professional}</td>
-            <td>${apt.type}</td>
             <td><span class="status ${apt.status.toLowerCase().replace(' ', '-')}">${apt.status}</span></td>
           </tr>
         `).join('')}
@@ -129,10 +126,6 @@ export interface ConsolidatedReportData {
     total: number
     completed: number
     noShow: number
-  }>
-  appointmentsByType: Array<{
-    type: string
-    count: number
   }>
 }
 
@@ -225,31 +218,6 @@ export function getConsolidatedReportTemplate(data: ConsolidatedReportData): str
               <td>${prof.completed}</td>
               <td>${prof.noShow}</td>
               <td>${rate}%</td>
-            </tr>
-          `
-        }).join('')}
-      </tbody>
-    </table>
-
-    <h3 style="margin-top: 30px;">Atendimentos por Tipo</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Tipo de Atendimento</th>
-          <th>Quantidade</th>
-          <th>Percentual</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.appointmentsByType.map(item => {
-          const percent = data.totalAppointments > 0 
-            ? Math.round((item.count / data.totalAppointments) * 100) 
-            : 0
-          return `
-            <tr>
-              <td>${item.type}</td>
-              <td>${item.count}</td>
-              <td>${percent}%</td>
             </tr>
           `
         }).join('')}

@@ -26,25 +26,16 @@ interface Professional {
   userId?: string
 }
 
-interface AppointmentType {
-  id: string
-  name: string
-  durationMinutes: number
-  specialtyId?: string | null
-}
-
 interface Appointment {
   id: string
   patientName: string
   professionalName: string
-  appointmentType: string
   scheduledDateTime: string
   endDateTime: string
   status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
   notes: string | null
   patientId: string
   professionalId: string
-  appointmentTypeId: string
 }
 
 export default function CalendarPage() {
@@ -55,7 +46,6 @@ export default function CalendarPage() {
   const [patients, setPatients] = useState<Patient[]>([])
   const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [professionals, setProfessionals] = useState<Professional[]>([])
-  const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
   const [loading, setLoading] = useState(true)
   const [myProfessionalId, setMyProfessionalId] = useState<string | null>(null)
 
@@ -82,18 +72,16 @@ export default function CalendarPage() {
       params.set('endDate', endOfMonth.toISOString())
       params.set('limit', '100')
 
-      const [appointmentsRes, patientsRes, professionalsRes, typesRes, specialtiesRes] = await Promise.all([
+      const [appointmentsRes, patientsRes, professionalsRes, specialtiesRes] = await Promise.all([
         fetch(`/api/appointments?${params}`),
         fetch('/api/patients?limit=100'),
         fetch('/api/appointments/professionals'),
-        fetch('/api/appointments/types'),
         fetch('/api/specialties?isActive=true'),
       ])
 
       const appointmentsData = await appointmentsRes.json()
       const patientsData = await patientsRes.json()
       const professionalsData = await professionalsRes.json()
-      const typesData = await typesRes.json()
       const specialtiesData = await specialtiesRes.json()
 
       if (appointmentsRes.ok) {
@@ -126,15 +114,6 @@ export default function CalendarPage() {
           }
         }
       }
-      if (typesRes.ok) {
-        const typesList = (typesData.data || []).map((t: { id: string; name: string; durationMinutes: number; specialtyId?: string | null }) => ({
-          id: t.id,
-          name: t.name,
-          durationMinutes: t.durationMinutes,
-          specialtyId: t.specialtyId
-        }))
-        setAppointmentTypes(typesList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
-      }
     } catch (error) {
       console.error('Error fetching data:', error)
       toast.error('Erro ao carregar dados', {
@@ -161,7 +140,6 @@ export default function CalendarPage() {
   const handleCreateAppointment = async (data: {
     patientId: string
     professionalId: string
-    appointmentTypeId: string
     scheduledDateTime: string
     notes: string
   }) => {
@@ -214,7 +192,7 @@ export default function CalendarPage() {
       } else {
         const error = await res.json()
         toast.error('Erro ao atualizar status', {
-          description: error.message || 'Tente novamente',
+          description: error.message || 'Verifique os dados e tente novamente',
         })
       }
     } catch (error) {
@@ -239,7 +217,7 @@ export default function CalendarPage() {
       } else {
         const error = await res.json()
         toast.error('Erro ao excluir agendamento', {
-          description: error.message || 'Tente novamente',
+          description: error.message || 'Verifique os dados e tente novamente',
         })
       }
     } catch (error) {
@@ -400,7 +378,6 @@ export default function CalendarPage() {
         initialData={selectedAppointment}
         patients={patients}
         professionals={professionals}
-        appointmentTypes={appointmentTypes}
         specialties={specialties}
         selectedSlot={selectedSlot || selectedDate?.toISOString()}
         isLoading={submitting}

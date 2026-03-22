@@ -2,7 +2,6 @@ export interface ReminderTemplateData {
   patientName: string
   appointmentDate: string
   appointmentTime: string
-  appointmentType: string
   professionalName: string
   clinicPhone?: string
 }
@@ -38,7 +37,6 @@ export function getAppointmentReminderTemplate(data: ReminderTemplateData): stri
         <p><span class="label">📅 Data:</span> ${data.appointmentDate}</p>
         <p><span class="label">⏰ Horário:</span> ${data.appointmentTime}</p>
         <p><span class="label">👨‍⚕️ Profissional:</span> ${data.professionalName}</p>
-        <p><span class="label">📋 Tipo:</span> ${data.appointmentType}</p>
       </div>
       
       <p><strong>⚠️ Por favor, confirme sua presença ou desmarque com antecedência caso não possa comparecer.</strong></p>
@@ -86,7 +84,6 @@ export function getAppointmentConfirmationTemplate(data: ReminderTemplateData): 
         <p><span class="label">📅 Data:</span> ${data.appointmentDate}</p>
         <p><span class="label">⏰ Horário:</span> ${data.appointmentTime}</p>
         <p><span class="label">👨‍⚕️ Profissional:</span> ${data.professionalName}</p>
-        <p><span class="label">📋 Tipo:</span> ${data.appointmentType}</p>
       </div>
       
       <p>Por favor, chegue com <strong>10 minutos de antecedência</strong>.</p>
@@ -101,7 +98,7 @@ export function getAppointmentConfirmationTemplate(data: ReminderTemplateData): 
 `
 }
 
-export function getAppointmentCancellationTemplate(data: ReminderTemplateData & { reason?: string }): string {
+export function getAppointmentCancellationTemplate(data: Omit<ReminderTemplateData, 'appointmentType'> & { reason?: string }): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -131,7 +128,6 @@ export function getAppointmentCancellationTemplate(data: ReminderTemplateData & 
         <p><span class="label">📅 Data:</span> ${data.appointmentDate}</p>
         <p><span class="label">⏰ Horário:</span> ${data.appointmentTime}</p>
         <p><span class="label">👨‍⚕️ Profissional:</span> ${data.professionalName}</p>
-        <p><span class="label">📋 Tipo:</span> ${data.appointmentType}</p>
         ${data.reason ? `<p><span class="label">📝 Motivo:</span> ${data.reason}</p>` : ''}
       </div>
       

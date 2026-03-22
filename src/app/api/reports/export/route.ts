@@ -76,9 +76,6 @@ export async function POST(request: NextRequest) {
               },
             },
           },
-          appointmentType: {
-            select: { name: true },
-          },
         },
         orderBy: { scheduledDateTime: 'desc' },
       })
@@ -98,7 +95,6 @@ export async function POST(request: NextRequest) {
           date: new Date(apt.scheduledDateTime).toLocaleDateString('pt-BR'),
           time: new Date(apt.scheduledDateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           professional: apt.professional.user.name || 'Unknown',
-          type: apt.appointmentType.name,
           status: apt.status === 'COMPLETED' ? 'Compareceu' : apt.status === 'NO_SHOW' ? 'Faltou' : apt.status,
         })),
       }
@@ -115,27 +111,6 @@ export async function POST(request: NextRequest) {
       const stats = await reportService.getDashboardStats(params)
       const professionalStats = await reportService.getProfessionalStats(params)
 
-      const appointmentsByType = await prisma.appointment.groupBy({
-        by: ['appointmentTypeId'],
-        where: {
-          ...(params.startDate || params.endDate ? {
-            scheduledDateTime: {
-              ...(params.startDate && { gte: params.startDate }),
-              ...(params.endDate && { lte: params.endDate }),
-            },
-          } : {}),
-        },
-        _count: true,
-      })
-
-      const types = await prisma.appointmentType.findMany({
-        where: {
-          id: { in: appointmentsByType.map(a => a.appointmentTypeId) },
-        },
-      })
-
-      const typeMap = new Map(types.map(t => [t.id, t.name]))
-
       const reportData = {
         period: {
           start: params.startDate?.toLocaleDateString('pt-BR') || 'Início',
@@ -151,10 +126,6 @@ export async function POST(request: NextRequest) {
           total: p.totalAppointments,
           completed: p.completedAppointments,
           noShow: p.noShowAppointments,
-        })),
-        appointmentsByType: appointmentsByType.map(a => ({
-          type: typeMap.get(a.appointmentTypeId) || 'Unknown',
-          count: a._count,
         })),
       }
 

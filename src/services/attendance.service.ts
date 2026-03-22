@@ -18,9 +18,6 @@ export type AttendanceWithRelations = {
   appointment?: {
     id: string
     scheduledDateTime: Date
-    appointmentType: {
-      name: string
-    }
   }
   patient?: {
     id: string
@@ -48,7 +45,6 @@ class AttendanceService {
   }) {
     const appointment = await prisma.appointment.findUnique({
       where: { id: data.appointmentId },
-      include: { appointmentType: true },
     })
 
     if (!appointment) {
@@ -56,7 +52,7 @@ class AttendanceService {
     }
 
     const endTime = new Date(data.startTime)
-    endTime.setMinutes(endTime.getMinutes() + appointment.appointmentType.durationMinutes)
+    endTime.setMinutes(endTime.getMinutes() + 60)
 
     return prisma.attendance.create({
       data: {
@@ -70,9 +66,7 @@ class AttendanceService {
         status: AttendanceStatus.PENDING,
       },
       include: {
-        appointment: {
-          include: { appointmentType: true },
-        },
+        appointment: true,
         patient: {
           include: { user: { select: { name: true } } },
         },
@@ -108,9 +102,7 @@ class AttendanceService {
         take: limit,
         orderBy: { startTime: 'desc' },
         include: {
-          appointment: {
-            include: { appointmentType: true },
-          },
+          appointment: true,
           patient: {
             include: { user: { select: { name: true } } },
           },
@@ -137,9 +129,7 @@ class AttendanceService {
     return prisma.attendance.findUnique({
       where: { id },
       include: {
-        appointment: {
-          include: { appointmentType: true },
-        },
+        appointment: true,
         patient: {
           include: { user: { select: { name: true } } },
         },
@@ -173,9 +163,7 @@ class AttendanceService {
       where: { id },
       data: updateData,
       include: {
-        appointment: {
-          include: { appointmentType: true },
-        },
+        appointment: true,
         patient: {
           include: { user: { select: { name: true } } },
         },
@@ -194,9 +182,7 @@ class AttendanceService {
         startTime: new Date(),
       },
       include: {
-        appointment: {
-          include: { appointmentType: true },
-        },
+        appointment: true,
         patient: {
           include: { user: { select: { name: true } } },
         },
@@ -224,9 +210,7 @@ class AttendanceService {
         ...(data?.treatmentPlan && { treatmentPlan: data.treatmentPlan }),
       },
       include: {
-        appointment: {
-          include: { appointmentType: true },
-        },
+        appointment: true,
         patient: {
           include: { user: { select: { name: true } } },
         },
@@ -245,9 +229,7 @@ class AttendanceService {
     return prisma.attendance.findFirst({
       where: { appointmentId },
       include: {
-        appointment: {
-          include: { appointmentType: true },
-        },
+        appointment: true,
         patient: {
           include: { user: { select: { name: true } } },
         },

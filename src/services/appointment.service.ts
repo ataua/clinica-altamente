@@ -2,18 +2,12 @@ import { prisma } from '@/lib/prisma'
 import { CreateAppointmentInput, UpdateAppointmentInput, AppointmentFilterInput } from '@/dtos/appointment.dto'
 import { AppointmentStatus } from '@prisma/client'
 
+const DEFAULT_DURATION_MINUTES = 60
+
 export class AppointmentService {
   async create ( data: CreateAppointmentInput ) {
     const scheduledDateTime = new Date( data.scheduledDateTime )
-    const appointmentType = await prisma.appointmentType.findUnique( {
-      where: { id: data.appointmentTypeId },
-    } )
-
-    if ( !appointmentType ) {
-      throw new Error( 'Tipo de agendamento não encontrado' )
-    }
-
-    const endDateTime = new Date( scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000 )
+    const endDateTime = new Date( scheduledDateTime.getTime() + DEFAULT_DURATION_MINUTES * 60000 )
 
     const conflictingAppointment = await prisma.appointment.findFirst( {
       where: {
@@ -44,7 +38,6 @@ export class AppointmentService {
       data: {
         patientId: data.patientId,
         professionalId: data.professionalId,
-        appointmentTypeId: data.appointmentTypeId,
         scheduledDateTime,
         endDateTime,
         notes: data.notes,
@@ -56,7 +49,6 @@ export class AppointmentService {
         professional: {
           include: { user: { select: { name: true } } },
         },
-        appointmentType: true,
       },
     } )
   }
@@ -90,7 +82,6 @@ export class AppointmentService {
           professional: {
             include: { user: { select: { name: true } } },
           },
-          appointmentType: true,
         },
       } ),
       prisma.appointment.count( { where } ),
@@ -101,7 +92,6 @@ export class AppointmentService {
         id: apt.id,
         patientName: apt.patient.user.name,
         professionalName: apt.professional.user.name,
-        appointmentType: apt.appointmentType.name,
         scheduledDateTime: apt.scheduledDateTime.toISOString(),
         endDateTime: apt.endDateTime.toISOString(),
         status: apt.status,
@@ -126,7 +116,6 @@ export class AppointmentService {
         professional: {
           include: { user: { select: { name: true } } },
         },
-        appointmentType: true,
       },
     } )
 
@@ -138,8 +127,6 @@ export class AppointmentService {
       patientName: appointment.patient.user.name,
       professionalId: appointment.professionalId,
       professionalName: appointment.professional.user.name,
-      appointmentTypeId: appointment.appointmentTypeId,
-      appointmentType: appointment.appointmentType.name,
       scheduledDateTime: appointment.scheduledDateTime.toISOString(),
       endDateTime: appointment.endDateTime.toISOString(),
       status: appointment.status,
@@ -156,17 +143,10 @@ export class AppointmentService {
 
     if ( data.scheduledDateTime ) {
       const scheduledDateTime = new Date( data.scheduledDateTime )
-      const appointmentType = await prisma.appointmentType.findUnique( {
-        where: { id: data.appointmentTypeId || existing.appointmentTypeId },
-      } )
-
-      if ( !appointmentType ) throw new Error( 'Tipo de agendamento não encontrado' )
-
       updateData.scheduledDateTime = scheduledDateTime
-      updateData.endDateTime = new Date( scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000 )
+      updateData.endDateTime = new Date( scheduledDateTime.getTime() + DEFAULT_DURATION_MINUTES * 60000 )
     }
 
-    if ( data.appointmentTypeId ) updateData.appointmentTypeId = data.appointmentTypeId
     if ( data.status ) updateData.status = data.status as AppointmentStatus
     if ( data.notes !== undefined ) updateData.notes = data.notes
     if ( data.cancellationReason !== undefined ) updateData.cancellationReason = data.cancellationReason
@@ -177,7 +157,6 @@ export class AppointmentService {
       include: {
         patient: { include: { user: { select: { name: true } } } },
         professional: { include: { user: { select: { name: true } } } },
-        appointmentType: true,
       },
     } )
   }
@@ -203,7 +182,6 @@ export class AppointmentService {
       include: {
         patient: { include: { user: { select: { name: true } } } },
         professional: { include: { user: { select: { name: true } } } },
-        appointmentType: true,
       },
     } )
   }
@@ -221,13 +199,7 @@ export class AppointmentService {
     }
 
     const scheduledDateTime = new Date( newDateTime )
-    const appointmentType = await prisma.appointmentType.findUnique( {
-      where: { id: existing.appointmentTypeId },
-    } )
-
-    if ( !appointmentType ) throw new Error( 'Tipo de agendamento não encontrado' )
-
-    const endDateTime = new Date( scheduledDateTime.getTime() + appointmentType.durationMinutes * 60000 )
+    const endDateTime = new Date( scheduledDateTime.getTime() + DEFAULT_DURATION_MINUTES * 60000 )
 
     const professionalId = newProfessionalId || existing.professionalId
 
@@ -268,31 +240,12 @@ export class AppointmentService {
       include: {
         patient: { include: { user: { select: { name: true } } } },
         professional: { include: { user: { select: { name: true } } } },
-        appointmentType: true,
       },
     } )
   }
 
   async delete ( id: string ) {
     return prisma.appointment.delete( { where: { id } } )
-  }
-
-  async getAppointmentTypes (specialtyId?: string) {
-    return prisma.appointmentType.findMany( {
-      where: { 
-        isActive: true,
-        ...(specialtyId && { specialtyId }),
-      },
-      include: {
-        specialty: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: { name: 'asc' },
-    } )
   }
 
   async getProfessionals (specialtyId?: string) {
@@ -367,53 +320,6 @@ export class AppointmentService {
     }
 
     return { slots }
-  }
-
-  async createType(data: {
-    name: string
-    description?: string
-    durationMinutes?: number
-    specialtyId?: string
-  }) {
-    return prisma.appointmentType.create({
-      data: {
-        name: data.name,
-        description: data.description || null,
-        durationMinutes: data.durationMinutes || 60,
-        specialtyId: data.specialtyId || null,
-      },
-    })
-  }
-
-  async updateType(id: string, data: {
-    name?: string
-    description?: string
-    durationMinutes?: number
-    specialtyId?: string
-    isActive?: boolean
-  }) {
-    return prisma.appointmentType.update({
-      where: { id },
-      data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.durationMinutes !== undefined && { durationMinutes: data.durationMinutes }),
-        ...(data.specialtyId !== undefined && { specialtyId: data.specialtyId }),
-        ...(data.isActive !== undefined && { isActive: data.isActive }),
-      },
-    })
-  }
-
-  async deleteType(id: string) {
-    return prisma.appointmentType.delete({
-      where: { id },
-    })
-  }
-
-  async getAllTypes() {
-    return prisma.appointmentType.findMany({
-      orderBy: { name: 'asc' },
-    })
   }
 
   async getProfessionalByUserId(userId: string) {

@@ -52,7 +52,6 @@ export const specs = {
           id: { type: 'string' },
           patientName: { type: 'string' },
           professionalName: { type: 'string' },
-          appointmentType: { type: 'string' },
           scheduledDateTime: { type: 'string', format: 'date-time' },
           endDateTime: { type: 'string', format: 'date-time' },
           status: { type: 'string', enum: ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] },
@@ -61,11 +60,10 @@ export const specs = {
       },
       CreateAppointment: {
         type: 'object',
-        required: ['patientId', 'professionalId', 'appointmentTypeId', 'scheduledDateTime'],
+        required: ['patientId', 'professionalId', 'scheduledDateTime'],
         properties: {
           patientId: { type: 'string' },
           professionalId: { type: 'string' },
-          appointmentTypeId: { type: 'string' },
           scheduledDateTime: { type: 'string', format: 'date-time' },
           notes: { type: 'string' },
         },
@@ -74,7 +72,6 @@ export const specs = {
         type: 'object',
         properties: {
           scheduledDateTime: { type: 'string', format: 'date-time' },
-          appointmentTypeId: { type: 'string' },
           status: { type: 'string', enum: ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] },
           notes: { type: 'string' },
           cancellationReason: { type: 'string' },
@@ -89,16 +86,6 @@ export const specs = {
           phone: { type: 'string' },
           cpf: { type: 'string' },
           relationship: { type: 'string' },
-        },
-      },
-      AppointmentType: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-          description: { type: 'string' },
-          durationMinutes: { type: 'integer' },
-          isActive: { type: 'boolean' },
         },
       },
       Professional: {
@@ -292,23 +279,13 @@ export const specs = {
         },
       },
     },
-    '/api/appointments/types': {
-      get: {
-        summary: 'Lista todos os tipos de agendamento',
-        tags: ['Appointments'],
-        security: [{ bearerAuth: [] }],
-        responses: {
-          200: { description: 'Lista de tipos de agendamento', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/AppointmentType' } } } },
-        },
-      },
-    },
     '/api/appointments/professionals': {
       get: {
         summary: 'Lista todos os profissionais',
         tags: ['Appointments'],
         security: [{ bearerAuth: [] }],
         responses: {
-          200: { description: 'Lista de profissionais', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Professional' } } } },
+          200: { description: 'Lista de profissionais', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Professional' } } } } },
         },
       },
     },
@@ -354,6 +331,4 @@ export const specs = {
       },
     },
   },
-  },
-}
 }

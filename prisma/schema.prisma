@@ -25,7 +25,6 @@ model Specialty {
   updatedAt   DateTime @updatedAt
 
   professionals     Professional[]
-  appointmentTypes AppointmentType[]
 }
 
 enum AppointmentStatus {
@@ -211,25 +210,10 @@ model ProfessionalSchedule {
   @@index([professionalId, dayOfWeek, isActive])
 }
 
-model AppointmentType {
-  id              String   @id @default(cuid())
-  name            String
-  description     String?
-  durationMinutes Int      @default(60)
-  specialtyId     String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  specialty    Specialty?     @relation(fields: [specialtyId], references: [id])
-  appointments Appointment[]
-}
-
 model Appointment {
   id                String            @id @default(cuid())
   patientId         String
   professionalId    String
-  appointmentTypeId String
   scheduledDateTime DateTime
   endDateTime       DateTime
   status            AppointmentStatus @default(SCHEDULED)
@@ -240,7 +224,6 @@ model Appointment {
 
   patient           Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
   professional      Professional      @relation(fields: [professionalId], references: [id], onDelete: Cascade)
-  appointmentType   AppointmentType   @relation(fields: [appointmentTypeId], references: [id], onDelete: Cascade)
   attendances       Attendance[]
   reminders         Reminder[]
 

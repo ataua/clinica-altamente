@@ -5,7 +5,6 @@ import { AppointmentStatus } from '@prisma/client'
 
 describe('AppointmentService', () => {
   let testProfessionalId: string
-  let testAppointmentTypeId: string
   let testPatientId: string
 
   beforeAll(async () => {
@@ -46,17 +45,6 @@ describe('AppointmentService', () => {
         isActive: true,
       },
     })
-
-    const appointmentType = await prisma.appointmentType.create({
-      data: {
-        name: 'Avaliação',
-        description: 'Avaliação inicial',
-        durationMinutes: 60,
-        isActive: true,
-        specialtyId: specialty.id,
-      },
-    })
-    testAppointmentTypeId = appointmentType.id
   })
 
   afterAll(async () => {
@@ -90,7 +78,6 @@ describe('AppointmentService', () => {
       const appointment = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
         notes: 'Test appointment',
       })
@@ -100,17 +87,6 @@ describe('AppointmentService', () => {
       expect(appointment.professionalId).toBe(testProfessionalId)
     })
 
-    it('should throw for invalid appointment type', async () => {
-      await expect(
-        appointmentService.create({
-          patientId: testPatientId,
-          professionalId: testProfessionalId,
-          appointmentTypeId: 'invalid-id',
-          scheduledDateTime: new Date().toISOString(),
-        })
-      ).rejects.toThrow('Tipo de agendamento não encontrado')
-    })
-
     it('should throw for conflicting appointment', async () => {
       const scheduledTime = new Date(Date.now() + 86400000)
       scheduledTime.setHours(10, 0, 0, 0)
@@ -118,7 +94,6 @@ describe('AppointmentService', () => {
       await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: scheduledTime.toISOString(),
       })
 
@@ -126,7 +101,6 @@ describe('AppointmentService', () => {
         appointmentService.create({
           patientId: testPatientId,
           professionalId: testProfessionalId,
-          appointmentTypeId: testAppointmentTypeId,
           scheduledDateTime: scheduledTime.toISOString(),
         })
       ).rejects.toThrow()
@@ -158,26 +132,23 @@ describe('AppointmentService', () => {
       await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: scheduledTime.toISOString(),
       })
 
       const result = await appointmentService.create({
         patientId: testPatientId,
         professionalId: professional2.id,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: scheduledTime.toISOString(),
       })
 
       expect(result.id).toBeDefined()
     })
 
-    it('should calculate end time based on appointment type duration', async () => {
+    it('should calculate end time based on default duration', async () => {
       const scheduledTime = new Date('2025-01-01T10:00:00Z')
       const appointment = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: scheduledTime.toISOString(),
       })
 
@@ -191,7 +162,6 @@ describe('AppointmentService', () => {
       await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -208,7 +178,6 @@ describe('AppointmentService', () => {
       await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -225,7 +194,6 @@ describe('AppointmentService', () => {
       const appointment = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -245,7 +213,6 @@ describe('AppointmentService', () => {
       await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: tomorrow.toISOString(),
       })
 
@@ -270,7 +237,6 @@ describe('AppointmentService', () => {
       const created = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -292,7 +258,6 @@ describe('AppointmentService', () => {
       const created = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -321,7 +286,6 @@ describe('AppointmentService', () => {
       const appointment = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -335,7 +299,6 @@ describe('AppointmentService', () => {
       const appointment = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -352,7 +315,6 @@ describe('AppointmentService', () => {
       const appointment = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -366,7 +328,6 @@ describe('AppointmentService', () => {
       const appointment = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 
@@ -384,7 +345,6 @@ describe('AppointmentService', () => {
       await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: scheduledTime.toISOString(),
       })
 
@@ -394,23 +354,12 @@ describe('AppointmentService', () => {
       const appointment2 = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: newTime.toISOString(),
       })
 
       await expect(
         appointmentService.reschedule(appointment2.id, scheduledTime.toISOString())
       ).rejects.toThrow('Horário com conflito com outro agendamento')
-    })
-  })
-
-  describe('getAppointmentTypes', () => {
-    it('should return active appointment types', async () => {
-      const types = await appointmentService.getAppointmentTypes()
-
-      expect(types).toBeDefined()
-      expect(types.length).toBeGreaterThan(0)
-      expect(types[0].isActive).toBe(true)
     })
   })
 
@@ -462,7 +411,6 @@ describe('AppointmentService', () => {
       const appointment = await appointmentService.create({
         patientId: testPatientId,
         professionalId: testProfessionalId,
-        appointmentTypeId: testAppointmentTypeId,
         scheduledDateTime: new Date(Date.now() + 86400000).toISOString(),
       })
 

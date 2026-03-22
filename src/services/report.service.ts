@@ -24,7 +24,6 @@ export interface AttendanceRecord {
   id: string
   patientName: string
   professionalName: string
-  appointmentType: string
   scheduledDateTime: Date
   status: string
 }
@@ -232,9 +231,6 @@ export class ReportService {
             },
           },
         },
-        appointmentType: {
-          select: { name: true },
-        },
       },
       orderBy: { scheduledDateTime: 'desc' },
       take: limit,
@@ -244,7 +240,6 @@ export class ReportService {
       id: apt.id,
       patientName: apt.patient.user.name || 'Unknown',
       professionalName: apt.professional.user.name || 'Unknown',
-      appointmentType: apt.appointmentType.name,
       scheduledDateTime: apt.scheduledDateTime,
       status: apt.status,
     }))
