@@ -92,7 +92,7 @@ export function AppointmentModal({
   specialties = [],
   selectedSlot,
   isLoading,
-  isProfessionalOnly = false,
+  isProfessionalOnly,
   myProfessionalId,
   forcedProfessionalId,
 }: AppointmentModalProps) {
@@ -103,9 +103,9 @@ export function AppointmentModal({
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('')
   const [occupiedSlots, setOccupiedSlots] = useState<string[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [initialized, setInitialized] = useState(false)
 
   const effectiveProfessionalId = forcedProfessionalId || myProfessionalId || ''
+  const isProfessionalForced = !!forcedProfessionalId || !!myProfessionalId
 
   const filteredProfessionals = useMemo(() => {
     if (!selectedSpecialtyId) return professionals
@@ -120,8 +120,7 @@ export function AppointmentModal({
   }, [occupiedSlots])
 
   useEffect(() => {
-    if (!initialized) {
-      setInitialized(true)
+    if (isOpen) {
       if (initialData) {
         setPatientId(initialData.patientId)
         setProfessionalId(initialData.professionalId)
@@ -139,13 +138,7 @@ export function AppointmentModal({
       }
       setErrors({})
     }
-  }, [initialized, initialData, selectedSlot, isProfessionalOnly, myProfessionalId, effectiveProfessionalId])
-
-  useEffect(() => {
-    if (isOpen) {
-      setInitialized(false)
-    }
-  }, [isOpen])
+  }, [isOpen, initialData, selectedSlot, effectiveProfessionalId])
 
   useEffect(() => {
     const fetchOccupiedSlots = async () => {
@@ -183,7 +176,7 @@ export function AppointmentModal({
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
     if (!patientId) newErrors.patientId = 'Paciente é obrigatório'
-    if (!professionalId) newErrors.professionalId = 'Profissional é obrigatório'
+    if (!isProfessionalForced && !professionalId) newErrors.professionalId = 'Profissional é obrigatório'
     if (!scheduledDateTime) newErrors.scheduledDateTime = 'Data/hora é obrigatória'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -243,7 +236,7 @@ export function AppointmentModal({
                 error={errors.patientId}
               />
 
-              {specialties.length > 0 && (
+              {!isProfessionalForced && specialties.length > 0 && (
                 <Select
                   id="specialty"
                   label="Especialidade"
@@ -261,15 +254,16 @@ export function AppointmentModal({
 
               <Select
                 id="professional"
-                label="Profissional *"
-                value={effectiveProfessionalId}
+                label={isProfessionalForced ? 'Profissional' : 'Profissional *'}
+                value={effectiveProfessionalId || professionalId}
                 onChange={(e) => setProfessionalId(e.target.value)}
-                options={effectiveProfessionalId ? 
-                  filteredProfessionals.filter(p => p.id === effectiveProfessionalId).map((p) => ({ value: p.id, label: p.name })) :
-                  [
-                    { value: '', label: selectedSpecialtyId ? 'Selecione uma especialidade primeiro' : 'Selecione...' },
-                    ...filteredProfessionals.map((p) => ({ value: p.id, label: p.name }))
-                  ]
+                options={
+                  effectiveProfessionalId
+                    ? [{ value: effectiveProfessionalId, label: professionals.find(p => p.id === effectiveProfessionalId)?.name || 'Profissional' }]
+                    : [
+                        { value: '', label: selectedSpecialtyId ? 'Selecione uma especialidade primeiro' : 'Selecione...' },
+                        ...filteredProfessionals.map((p) => ({ value: p.id, label: p.name }))
+                      ]
                 }
                 error={errors.professionalId}
                 disabled={!!effectiveProfessionalId}
