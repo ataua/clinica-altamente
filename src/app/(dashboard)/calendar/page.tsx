@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { CalendarGrid } from '@/components/organisms/CalendarGrid'
 import { AppointmentModal } from '@/components/molecules/AppointmentModal'
 import { TimeSlotPicker } from '@/components/molecules/TimeSlotPicker'
@@ -39,7 +39,7 @@ interface Appointment {
 }
 
 export default function CalendarPage() {
-  const { status, data: session } = useSession()
+  const { status, data: session } = useSessionContext()
   const router = useRouter()
 
   const [appointments, setAppointments] = useState<Appointment[]>([])

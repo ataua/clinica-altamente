@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useSession, signOut } from 'next-auth/react'
+import { signOut } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 
 interface Stats {
   totalPatients: number
@@ -12,7 +13,7 @@ interface Stats {
 }
 
 export default function Dashboard() {
-  const { data: session, status } = useSession()
+  const { data: session, status } = useSessionContext()
   const [stats, setStats] = useState<Stats>({
     totalPatients: 0,
     totalAppointments: 0,

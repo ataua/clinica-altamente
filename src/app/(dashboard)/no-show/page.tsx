@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -14,7 +14,7 @@ interface NoShowPatient {
 }
 
 export default function NoShowListPage() {
-  const { status } = useSession()
+  const { status } = useSessionContext()
   const router = useRouter()
   const [patients, setPatients] = useState<NoShowPatient[]>([])
   const [loading, setLoading] = useState(true)

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 export default function ReportsPage() {
-  const { status } = useSession()
+  const { status } = useSessionContext()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [reportType, setReportType] = useState<'individual' | 'consolidated'>('consolidated')

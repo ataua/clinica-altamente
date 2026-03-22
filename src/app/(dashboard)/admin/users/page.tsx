@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Select } from '@/components/atoms/Select'
@@ -26,7 +26,7 @@ interface Pagination {
 }
 
 export default function UsersPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status } = useSessionContext()
   const router = useRouter()
   
   const [users, setUsers] = useState<User[]>([])

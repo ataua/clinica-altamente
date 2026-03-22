@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { Button } from '@/components/atoms/Button'
 import { AppointmentStatusBadge } from '@/components/atoms/AppointmentStatusBadge'
 import { AttendanceModal } from '@/components/molecules/AttendanceModal'
@@ -50,7 +50,7 @@ interface Patient {
 }
 
 export default function PatientHistoryPage() {
-  const { status } = useSession()
+  const { status } = useSessionContext()
   const router = useRouter()
   const params = useParams()
   const patientId = params.id as string

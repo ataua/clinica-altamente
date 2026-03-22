@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { PatientTable } from '@/components/organisms/PatientTable'
 import { PatientModal } from '@/components/molecules/PatientModal'
 import { ResponsibleModal } from '@/components/molecules/ResponsibleModal'
@@ -38,7 +38,7 @@ interface Pagination {
 }
 
 export default function PatientsPage() {
-  const { status } = useSession()
+  const { status } = useSessionContext()
   const router = useRouter()
   
   const [patients, setPatients] = useState<Patient[]>([])

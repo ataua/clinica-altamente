@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { useRouter } from 'next/navigation'
 
 interface DashboardStats {
@@ -32,7 +32,7 @@ interface MonthlyTrend {
 }
 
 export default function DashboardPage() {
-  const { status } = useSession()
+  const { status } = useSessionContext()
   const router = useRouter()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [professionalStats, setProfessionalStats] = useState<ProfessionalStats[]>([])

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { Input } from '@/components/atoms/Input'
 import { Select } from '@/components/atoms/Select'
 import { Button } from '@/components/atoms/Button'
@@ -38,7 +38,7 @@ const statusOptions = [
 ]
 
 export default function AppointmentsPage() {
-  const { status } = useSession()
+  const { status } = useSessionContext()
   const router = useRouter()
 
   const [appointments, setAppointments] = useState<Appointment[]>([])

@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 
 export default function SwaggerPage() {
-  const { data: session } = useSession()
+  const { data: session } = useSessionContext()
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {

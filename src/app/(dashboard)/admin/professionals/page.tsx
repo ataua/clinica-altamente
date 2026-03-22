@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSessionContext } from '@/contexts/SessionContext'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
@@ -130,7 +130,7 @@ function SpecialtyModal({ isOpen, onClose, onSuccess }: SpecialtyModalProps) {
 }
 
 export default function ProfessionalsPage() {
-  const { status, data: session } = useSession()
+  const { status, data: session } = useSessionContext()
   const router = useRouter()
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([])
