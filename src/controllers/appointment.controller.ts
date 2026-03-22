@@ -8,7 +8,7 @@ import { generateAppointmentLinks } from '@/lib/hateoas'
 export class AppointmentController extends BaseController {
   async findAll(request: NextRequest) {
     try {
-      await this.requireAuth()
+      const user = await this.requireAuth()
 
       const searchParams = request.nextUrl.searchParams
       const page = parseInt(searchParams.get('page') || '1')
@@ -19,12 +19,21 @@ export class AppointmentController extends BaseController {
       const patientId = searchParams.get('patientId') || undefined
       const status = searchParams.get('status') || undefined
 
+      let effectiveProfessionalId = professionalId
+
+      if (user.role === 'PROFESSIONAL' && user.id) {
+        const professional = await appointmentService.getProfessionalByUserId(user.id)
+        if (professional) {
+          effectiveProfessionalId = professional.id
+        }
+      }
+
       const filter = AppointmentFilterDTO.parse({
         page,
         limit,
         startDate,
         endDate,
-        professionalId,
+        professionalId: effectiveProfessionalId,
         patientId,
         status,
       })

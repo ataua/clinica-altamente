@@ -22,6 +22,7 @@ interface Professional {
   id: string
   name: string
   specialtyId?: string | null
+  userId?: string
 }
 
 interface AppointmentType {
@@ -46,7 +47,7 @@ interface Appointment {
 }
 
 export default function CalendarPage() {
-  const { status } = useSession()
+  const { status, data: session } = useSession()
   const router = useRouter()
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -55,11 +56,15 @@ export default function CalendarPage() {
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
   const [loading, setLoading] = useState(true)
+  const [myProfessionalId, setMyProfessionalId] = useState<string | null>(null)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | undefined>()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
   const [submitting, setSubmitting] = useState(false)
+
+  const canCreateAppointments = session?.user?.role === 'ADMIN' || session?.user?.role === 'SECRETARY'
+  const isProfessionalOnly = session?.user?.role === 'PROFESSIONAL'
 
   const fetchData = useCallback(async () => {
     try {
@@ -102,12 +107,20 @@ export default function CalendarPage() {
         setSpecialties(specialtiesList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
       }
       if (professionalsRes.ok) {
-        const professionalsList = (professionalsData.data || []).map((p: { id: string; user: { name: string }; specialtyId?: string | null }) => ({
+        const professionalsList = (professionalsData.data || []).map((p: { id: string; user: { name: string }; specialtyId?: string | null; userId?: string }) => ({
           id: p.id,
           name: p.user.name,
-          specialtyId: p.specialtyId
+          specialtyId: p.specialtyId,
+          userId: p.userId
         }))
         setProfessionals(professionalsList.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)))
+        
+        if (session?.user?.role === 'PROFESSIONAL' && session?.user?.id) {
+          const myProfessional = professionalsList.find((p: Professional) => p.userId === session.user.id)
+          if (myProfessional) {
+            setMyProfessionalId(myProfessional.id)
+          }
+        }
       }
       if (typesRes.ok) {
         const typesList = (typesData.data || []).map((t: { id: string; name: string; durationMinutes: number; specialtyId?: string | null }) => ({
@@ -126,15 +139,20 @@ export default function CalendarPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [session?.user?.id, session?.user?.role])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
     } else if (status === 'authenticated') {
+      const role = session?.user?.role
+      if (role !== 'ADMIN' && role !== 'SECRETARY' && role !== 'PROFESSIONAL') {
+        router.push('/')
+        return
+      }
       fetchData()
     }
-  }, [status, router, fetchData])
+  }, [status, router, fetchData, session?.user?.role])
 
   const handleCreateAppointment = async (data: {
     patientId: string
@@ -145,10 +163,16 @@ export default function CalendarPage() {
   }) => {
     try {
       setSubmitting(true)
+      
+      const appointmentData = {
+        ...data,
+        professionalId: isProfessionalOnly && myProfessionalId ? myProfessionalId : data.professionalId,
+      }
+      
       const res = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(appointmentData),
       })
 
       if (res.ok) {
@@ -256,12 +280,21 @@ export default function CalendarPage() {
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Calendário de Agendamentos
-            </h1>
-            <Button onClick={() => { setSelectedAppointment(undefined); setSelectedDate(new Date()); setIsModalOpen(true); }}>
-              + Novo Agendamento
-            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Calendário de Agendamentos
+              </h1>
+              {isProfessionalOnly && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Visualizando apenas seus agendamentos
+                </p>
+              )}
+            </div>
+            {canCreateAppointments && (
+              <Button onClick={() => { setSelectedAppointment(undefined); setSelectedDate(new Date()); setIsModalOpen(true); }}>
+                + Novo Agendamento
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -317,6 +350,8 @@ export default function CalendarPage() {
         specialties={specialties}
         selectedSlot={selectedDate?.toISOString()}
         isLoading={submitting}
+        isProfessionalOnly={isProfessionalOnly}
+        myProfessionalId={myProfessionalId}
       />
     </div>
   )

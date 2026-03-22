@@ -415,6 +415,13 @@ export class AppointmentService {
       orderBy: { name: 'asc' },
     })
   }
+
+  async getProfessionalByUserId(userId: string) {
+    return prisma.professional.findUnique({
+      where: { userId },
+      select: { id: true },
+    })
+  }
 }
 
 export const appointmentService = new AppointmentService()

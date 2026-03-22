@@ -61,6 +61,8 @@ interface AppointmentModalProps {
   specialties?: Specialty[]
   selectedSlot?: string
   isLoading?: boolean
+  isProfessionalOnly?: boolean
+  myProfessionalId?: string | null
 }
 
 const statusOptions = [
@@ -101,6 +103,8 @@ export function AppointmentModal({
   specialties = [],
   selectedSlot,
   isLoading,
+  isProfessionalOnly = false,
+  myProfessionalId,
 }: AppointmentModalProps) {
   const [patientId, setPatientId] = useState('')
   const [professionalId, setProfessionalId] = useState('')
@@ -142,7 +146,7 @@ export function AppointmentModal({
         setOccupiedSlots([])
       } else {
         setPatientId('')
-        setProfessionalId('')
+        setProfessionalId(isProfessionalOnly && myProfessionalId ? myProfessionalId : '')
         setAppointmentTypeId('')
         setScheduledDateTime(selectedSlot ? selectedSlot.slice(0, 16) : '')
         setNotes('')
@@ -151,7 +155,7 @@ export function AppointmentModal({
       }
       setErrors({})
     }
-  }, [initialized, initialData, selectedSlot])
+  }, [initialized, initialData, selectedSlot, isProfessionalOnly, myProfessionalId])
 
   useEffect(() => {
     if (isOpen) {
@@ -280,11 +284,15 @@ export function AppointmentModal({
                 label="Profissional *"
                 value={professionalId}
                 onChange={(e) => setProfessionalId(e.target.value)}
-                options={[
-                  { value: '', label: selectedSpecialtyId ? 'Selecione uma especialidade primeiro' : 'Selecione...' },
-                  ...filteredProfessionals.map((p) => ({ value: p.id, label: p.name }))
-                ]}
+                options={isProfessionalOnly ? 
+                  filteredProfessionals.filter(p => p.id === myProfessionalId).map((p) => ({ value: p.id, label: p.name })) :
+                  [
+                    { value: '', label: selectedSpecialtyId ? 'Selecione uma especialidade primeiro' : 'Selecione...' },
+                    ...filteredProfessionals.map((p) => ({ value: p.id, label: p.name }))
+                  ]
+                }
                 error={errors.professionalId}
+                disabled={isProfessionalOnly}
               />
 
               <Select
