@@ -320,7 +320,7 @@ export default function CalendarPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Calendário de Agendamentos
@@ -331,55 +331,55 @@ export default function CalendarPage() {
                 </p>
               )}
             </div>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Paciente:</label>
-              <select
-                value={filterPatientId}
-                onChange={(e) => handleFilterPatientChange(e.target.value)}
-                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Todos os pacientes</option>
-                {patients.map((patient) => (
-                  <option key={patient.id} value={patient.id}>
-                    {patient.name}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Paciente:</label>
+                <select
+                  value={filterPatientId}
+                  onChange={(e) => handleFilterPatientChange(e.target.value)}
+                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                >
+                  <option value="">Todos</option>
+                  {patients.map((patient) => (
+                    <option key={patient.id} value={patient.id}>
+                      {patient.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Profissional:</label>
+                <select
+                  value={filterProfessionalId}
+                  onChange={(e) => handleFilterProfessionalChange(e.target.value)}
+                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
+                >
+                  <option value="">Todos</option>
+                  {professionals.map((professional) => (
+                    <option key={professional.id} value={professional.id}>
+                      {professional.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {(filterPatientId || filterProfessionalId) && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 whitespace-nowrap"
+                >
+                  Limpar
+                </button>
+              )}
+              {canCreateAppointments && (
+                <Button onClick={() => { 
+                  setSelectedAppointment(undefined); 
+                  setSelectedDate(new Date()); 
+                  setIsTimeSlotPickerOpen(true);
+                }}>
+                  + Novo
+                </Button>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Profissional:</label>
-              <select
-                value={filterProfessionalId}
-                onChange={(e) => handleFilterProfessionalChange(e.target.value)}
-                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Todos os profissionais</option>
-                {professionals.map((professional) => (
-                  <option key={professional.id} value={professional.id}>
-                    {professional.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {(filterPatientId || filterProfessionalId) && (
-              <button
-                onClick={clearFilters}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-              >
-                Limpar filtros
-              </button>
-            )}
-            {canCreateAppointments && (
-              <Button onClick={() => { 
-                setSelectedAppointment(undefined); 
-                setSelectedDate(new Date()); 
-                setIsTimeSlotPickerOpen(true);
-              }}>
-                + Novo Agendamento
-              </Button>
-            )}
           </div>
         </div>
       </header>

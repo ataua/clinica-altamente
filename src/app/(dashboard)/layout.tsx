@@ -28,13 +28,22 @@ export default async function DashboardLayout({
               </Link>
               <div className="hidden sm:flex items-center gap-6">
                 {isAdmin && (
-                  <Link 
-                    href="/admin/users" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                    aria-label="Gerenciar usuários"
-                  >
-                    Usuários
-                  </Link>
+                  <>
+                    <Link 
+                      href="/admin/users" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Gerenciar usuários"
+                    >
+                      Usuários
+                    </Link>
+                    <Link 
+                      href="/admin/professionals" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Gerenciar profissionais"
+                    >
+                      Profissionais
+                    </Link>
+                  </>
                 )}
                 <Link 
                   href="/calendar" 
