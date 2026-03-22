@@ -63,6 +63,7 @@ interface AppointmentModalProps {
   isLoading?: boolean
   isProfessionalOnly?: boolean
   myProfessionalId?: string | null
+  forcedProfessionalId?: string | null
 }
 
 const statusOptions = [
@@ -105,6 +106,7 @@ export function AppointmentModal({
   isLoading,
   isProfessionalOnly = false,
   myProfessionalId,
+  forcedProfessionalId,
 }: AppointmentModalProps) {
   const [patientId, setPatientId] = useState('')
   const [professionalId, setProfessionalId] = useState('')
@@ -115,6 +117,8 @@ export function AppointmentModal({
   const [occupiedSlots, setOccupiedSlots] = useState<string[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [initialized, setInitialized] = useState(false)
+
+  const effectiveProfessionalId = forcedProfessionalId || myProfessionalId || ''
 
   const filteredProfessionals = useMemo(() => {
     if (!selectedSpecialtyId) return professionals
@@ -146,7 +150,7 @@ export function AppointmentModal({
         setOccupiedSlots([])
       } else {
         setPatientId('')
-        setProfessionalId(isProfessionalOnly && myProfessionalId ? myProfessionalId : '')
+        setProfessionalId(effectiveProfessionalId)
         setAppointmentTypeId('')
         setScheduledDateTime(selectedSlot ? selectedSlot.slice(0, 16) : '')
         setNotes('')
@@ -155,7 +159,7 @@ export function AppointmentModal({
       }
       setErrors({})
     }
-  }, [initialized, initialData, selectedSlot, isProfessionalOnly, myProfessionalId])
+  }, [initialized, initialData, selectedSlot, isProfessionalOnly, myProfessionalId, effectiveProfessionalId])
 
   useEffect(() => {
     if (isOpen) {
@@ -165,14 +169,14 @@ export function AppointmentModal({
 
   useEffect(() => {
     const fetchOccupiedSlots = async () => {
-      if (!professionalId || !selectedSlot) {
+      if (!effectiveProfessionalId || !selectedSlot) {
         setOccupiedSlots([])
         return
       }
 
       try {
         const date = selectedSlot.split('T')[0]
-        const res = await fetch(`/api/appointments/slots?professionalId=${professionalId}&date=${date}`)
+        const res = await fetch(`/api/appointments/slots?professionalId=${effectiveProfessionalId}&date=${date}`)
         if (res.ok) {
           const data = await res.json()
           const occupied = (data.data?.slots || []).map((slot: string) => {
@@ -189,12 +193,12 @@ export function AppointmentModal({
       }
     }
 
-    if (professionalId && selectedSlot) {
+    if (effectiveProfessionalId && selectedSlot) {
       fetchOccupiedSlots()
     } else {
       setOccupiedSlots([])
     }
-  }, [professionalId, selectedSlot])
+  }, [effectiveProfessionalId, selectedSlot])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -282,17 +286,17 @@ export function AppointmentModal({
               <Select
                 id="professional"
                 label="Profissional *"
-                value={professionalId}
+                value={effectiveProfessionalId}
                 onChange={(e) => setProfessionalId(e.target.value)}
-                options={isProfessionalOnly ? 
-                  filteredProfessionals.filter(p => p.id === myProfessionalId).map((p) => ({ value: p.id, label: p.name })) :
+                options={effectiveProfessionalId ? 
+                  filteredProfessionals.filter(p => p.id === effectiveProfessionalId).map((p) => ({ value: p.id, label: p.name })) :
                   [
                     { value: '', label: selectedSpecialtyId ? 'Selecione uma especialidade primeiro' : 'Selecione...' },
                     ...filteredProfessionals.map((p) => ({ value: p.id, label: p.name }))
                   ]
                 }
                 error={errors.professionalId}
-                disabled={isProfessionalOnly}
+                disabled={!!effectiveProfessionalId}
               />
 
               <Select

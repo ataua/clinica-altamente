@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { CalendarGrid } from '@/components/organisms/CalendarGrid'
 import { AppointmentModal } from '@/components/molecules/AppointmentModal'
+import { TimeSlotPicker } from '@/components/molecules/TimeSlotPicker'
 import { Button } from '@/components/atoms/Button'
 import { toast } from '@/components/ui/toast'
 
@@ -59,8 +60,11 @@ export default function CalendarPage() {
   const [myProfessionalId, setMyProfessionalId] = useState<string | null>(null)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isTimeSlotPickerOpen, setIsTimeSlotPickerOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | undefined>()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+  const [selectedSlot, setSelectedSlot] = useState<string | undefined>()
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
 
   const canCreateAppointments = session?.user?.role === 'ADMIN' || session?.user?.role === 'SECRETARY'
@@ -256,14 +260,46 @@ export default function CalendarPage() {
   }
 
   const handleDayClick = (date: Date) => {
+    if (!canCreateAppointments && !isProfessionalOnly) return
+    
     setSelectedDate(date)
     setSelectedAppointment(undefined)
+    
+    if (isProfessionalOnly) {
+      setIsModalOpen(true)
+    } else {
+      setIsTimeSlotPickerOpen(true)
+    }
+  }
+
+  const handleSlotSelect = (time: string, professionalId: string) => {
+    const dateStr = selectedDate?.toISOString().split('T')[0]
+    setSelectedSlot(`${dateStr}T${time}:00.000Z`)
+    setSelectedProfessionalId(professionalId)
+    setIsTimeSlotPickerOpen(false)
     setIsModalOpen(true)
+  }
+
+  const handleEditAppointmentFromSlot = (appointmentId: string) => {
+    const appointment = appointments.find((a) => a.id === appointmentId)
+    if (appointment) {
+      setSelectedAppointment(appointment)
+      setSelectedDate(undefined)
+      setIsTimeSlotPickerOpen(false)
+      setIsModalOpen(true)
+    }
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedAppointment(undefined)
+    setSelectedDate(undefined)
+    setSelectedSlot(undefined)
+    setSelectedProfessionalId('')
+  }
+
+  const handleCloseTimeSlotPicker = () => {
+    setIsTimeSlotPickerOpen(false)
     setSelectedDate(undefined)
   }
 
@@ -291,7 +327,11 @@ export default function CalendarPage() {
               )}
             </div>
             {canCreateAppointments && (
-              <Button onClick={() => { setSelectedAppointment(undefined); setSelectedDate(new Date()); setIsModalOpen(true); }}>
+              <Button onClick={() => { 
+                setSelectedAppointment(undefined); 
+                setSelectedDate(new Date()); 
+                setIsTimeSlotPickerOpen(true);
+              }}>
                 + Novo Agendamento
               </Button>
             )}
@@ -337,6 +377,20 @@ export default function CalendarPage() {
         </div>
       </main>
 
+      <TimeSlotPicker
+        isOpen={isTimeSlotPickerOpen}
+        onClose={handleCloseTimeSlotPicker}
+        onSelectSlot={handleSlotSelect}
+        onEditAppointment={handleEditAppointmentFromSlot}
+        date={selectedDate?.toISOString().split('T')[0] || ''}
+        professionals={professionals}
+        selectedProfessionalId={selectedProfessionalId}
+        isProfessionalOnly={isProfessionalOnly}
+        myProfessionalId={myProfessionalId}
+        appointments={appointments}
+        onProfessionalChange={setSelectedProfessionalId}
+      />
+
       <AppointmentModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -348,10 +402,11 @@ export default function CalendarPage() {
         professionals={professionals}
         appointmentTypes={appointmentTypes}
         specialties={specialties}
-        selectedSlot={selectedDate?.toISOString()}
+        selectedSlot={selectedSlot || selectedDate?.toISOString()}
         isLoading={submitting}
         isProfessionalOnly={isProfessionalOnly}
-        myProfessionalId={myProfessionalId}
+        myProfessionalId={isProfessionalOnly ? myProfessionalId : selectedProfessionalId}
+        forcedProfessionalId={isProfessionalOnly ? undefined : selectedProfessionalId}
       />
     </div>
   )
