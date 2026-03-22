@@ -504,29 +504,16 @@ export default function ProfessionalsPage() {
                 />
               )}
 
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Select
-                    id="specialty"
-                    label="Especialidade"
-                    value={specialtyId}
-                    onChange={(e) => setSpecialtyId(e.target.value)}
-                    options={[
-                      { value: '', label: 'Selecione (opcional)' },
-                      ...specialties.map(s => ({ value: s.id, label: s.name }))
-                    ]}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsSpecialtyModalOpen(true)}
-                  className="mb-0.5"
-                >
-                  + Nova
-                </Button>
-              </div>
+              <Select
+                id="specialty"
+                label="Especialidade"
+                value={specialtyId}
+                onChange={(e) => setSpecialtyId(e.target.value)}
+                options={[
+                  { value: '', label: 'Selecione (opcional)' },
+                  ...specialties.map(s => ({ value: s.id, label: s.name }))
+                ]}
+              />
 
               <Input
                 id="licenseNumber"
