@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/atoms/Button'
 import { Select } from '@/components/atoms/Select'
 
@@ -9,10 +9,17 @@ interface Professional {
   name: string
 }
 
-interface TimeSlot {
+interface OccupiedSlot {
   time: string
-  available: boolean
-  appointmentId?: string
+  appointmentId: string
+}
+
+interface Appointment {
+  id: string
+  scheduledDateTime: string
+  endDateTime: string
+  status: string
+  patientName: string
 }
 
 interface TimeSlotPickerProps {
@@ -25,29 +32,14 @@ interface TimeSlotPickerProps {
   selectedProfessionalId?: string
   isProfessionalOnly?: boolean
   myProfessionalId?: string | null
-  appointments?: {
-    id: string
-    scheduledDateTime: string
-    endDateTime: string
-    status: string
-    professionalId: string
-  }[]
   onProfessionalChange?: (professionalId: string) => void
 }
 
-function generateTimeSlots(): TimeSlot[] {
-  const slots: TimeSlot[] = []
-  for (let hour = 8; hour <= 17; hour++) {
-    for (let minute = 0; minute < 60; minute += 30) {
-      const hourStr = hour.toString().padStart(2, '0')
-      const minStr = minute.toString().padStart(2, '0')
-      slots.push({
-        time: `${hourStr}:${minStr}`,
-        available: true,
-      })
-    }
-  }
-  return slots
+interface TimeSlot {
+  time: string
+  available: boolean
+  appointmentId?: string
+  appointment?: Appointment
 }
 
 export function TimeSlotPicker({
@@ -60,10 +52,13 @@ export function TimeSlotPicker({
   selectedProfessionalId,
   isProfessionalOnly = false,
   myProfessionalId,
-  appointments = [],
   onProfessionalChange,
 }: TimeSlotPickerProps) {
   const [selectedProfessional, setSelectedProfessional] = useState<string>('')
+  const [occupiedSlots, setOccupiedSlots] = useState<OccupiedSlot[]>([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (isProfessionalOnly && myProfessionalId) {
@@ -73,56 +68,63 @@ export function TimeSlotPicker({
     }
   }, [isProfessionalOnly, myProfessionalId, selectedProfessionalId, isOpen])
 
-  const slots = useMemo(() => {
-    const allSlots = generateTimeSlots()
-    
-    const dayAppointments = appointments.filter(apt => {
-      const aptDate = new Date(apt.scheduledDateTime).toISOString().split('T')[0]
-      return aptDate === date && apt.professionalId === selectedProfessional
-    })
-
-    return allSlots.map(slot => {
-      const slotTime = `${date}T${slot.time}:00`
-      const slotEnd = `${date}T${slot.time}:30`
-
-      const conflictingAppointment = dayAppointments.find(apt => {
-        const aptStart = new Date(apt.scheduledDateTime).getTime()
-        const aptEnd = new Date(apt.endDateTime).getTime()
-        const slotStart = new Date(slotTime).getTime()
-        const slotEndTime = new Date(slotEnd).getTime()
-
-        return (
-          (slotStart >= aptStart && slotStart < aptEnd) ||
-          (slotEndTime > aptStart && slotEndTime <= aptEnd) ||
-          (slotStart <= aptStart && slotEndTime >= aptEnd)
-        )
-      })
-
-      return {
-        ...slot,
-        available: !conflictingAppointment,
-        appointmentId: conflictingAppointment?.id,
+  useEffect(() => {
+    const fetchSlots = async () => {
+      if (!selectedProfessional || !date) {
+        setOccupiedSlots([])
+        setAppointments([])
+        return
       }
-    })
-  }, [date, appointments, selectedProfessional])
 
-  const handleSlotClick = (slot: TimeSlot) => {
-    if (!slot.available || !selectedProfessional) return
-    onSelectSlot(slot.time, selectedProfessional)
+      setLoading(true)
+      setError(null)
+
+      try {
+        const res = await fetch(`/api/appointments/slots?professionalId=${selectedProfessional}&date=${date}`)
+        const data = await res.json()
+
+        if (res.ok && data.success) {
+          setOccupiedSlots(data.data.occupiedSlots || [])
+          setAppointments(data.data.appointments || [])
+        } else {
+          setError(data.data?.message || 'Erro ao carregar horários')
+          setOccupiedSlots([])
+          setAppointments([])
+        }
+      } catch (err) {
+        console.error('Error fetching slots:', err)
+        setError('Erro ao carregar horários')
+        setOccupiedSlots([])
+        setAppointments([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (selectedProfessional) {
+      fetchSlots()
+    }
+  }, [selectedProfessional, date])
+
+  const handleProfessionalChange = (newProfessionalId: string) => {
+    setSelectedProfessional(newProfessionalId)
+    setOccupiedSlots([])
+    setAppointments([])
+    onProfessionalChange?.(newProfessionalId)
   }
 
   const handleEditClick = (appointmentId: string) => {
     onEditAppointment(appointmentId)
   }
 
-  const handleProfessionalChange = (newProfessionalId: string) => {
-    setSelectedProfessional(newProfessionalId)
-    onProfessionalChange?.(newProfessionalId)
-  }
-
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T12:00:00')
     return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+
+  const formatTime = (isoString: string) => {
+    const d = new Date(isoString)
+    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   }
 
   if (!isOpen) return null
@@ -167,43 +169,65 @@ export function TimeSlotPicker({
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
               Selecione um profissional para ver os horários disponíveis
             </p>
-          ) : (
-            <div className="grid grid-cols-4 gap-2">
-              {slots.map((slot) => (
-                <button
-                  key={slot.time}
-                  onClick={() => slot.available ? handleSlotClick(slot) : slot.appointmentId && handleEditClick(slot.appointmentId)}
-                  disabled={slot.available && !isProfessionalOnly && !selectedProfessional}
-                  className={`
-                    py-3 px-2 rounded-lg text-sm font-medium transition-all
-                    ${slot.available
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 cursor-pointer'
-                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 cursor-pointer hover:bg-red-200 dark:hover:bg-red-900/50'
-                    }
-                    ${!slot.available && slot.appointmentId ? 'border-2 border-red-300 dark:border-red-700' : ''}
-                    ${!selectedProfessional ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                >
-                  {slot.time}
-                  {!slot.available && (
-                    <span className="block text-xs opacity-75">Ocupado</span>
-                  )}
-                  {slot.available && (
-                    <span className="block text-xs opacity-75">Livre</span>
-                  )}
-                </button>
-              ))}
+          ) : loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
             </div>
+          ) : error ? (
+            <p className="text-center text-red-500 dark:text-red-400 py-8">{error}</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {occupiedSlots.map((slot) => (
+                  <button
+                    key={slot.appointmentId}
+                    onClick={() => handleEditClick(slot.appointmentId)}
+                    className="py-3 px-2 rounded-lg text-sm font-medium transition-all bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 cursor-pointer hover:bg-red-200 dark:hover:bg-red-900/50 border-2 border-red-300 dark:border-red-700"
+                  >
+                    {formatTime(slot.time)}
+                    <span className="block text-xs opacity-75">Ocupado</span>
+                  </button>
+                ))}
+              </div>
+              
+              {occupiedSlots.length > 0 && appointments.length > 0 && (
+                <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Agendamentos do dia:</h4>
+                  <div className="space-y-1">
+                    {appointments.map((apt) => (
+                      <div key={apt.id} className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">{formatTime(apt.scheduledDateTime)}</span> - {apt.patientName}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {occupiedSlots.length === 0 && appointments.length === 0 && (
+                <div className="text-center text-gray-500 dark:text-gray-400 py-4 mb-4">
+                  Nenhum agendamento para este profissional neste dia
+                </div>
+              )}
+
+              <Button
+                onClick={() => {
+                  const time = '09:00'
+                  onSelectSlot(time, selectedProfessional)
+                }}
+                className="w-full"
+              >
+                Agendar em horário disponível
+              </Button>
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                Você poderá selecionar o horário específico na próxima etapa
+              </p>
+            </>
           )}
         </div>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-green-500"></span>
-                <span className="text-gray-600 dark:text-gray-400">Livre</span>
-              </div>
               <div className="flex items-center gap-1">
                 <span className="w-3 h-3 rounded bg-red-500"></span>
                 <span className="text-gray-600 dark:text-gray-400">Ocupado (clique para editar)</span>

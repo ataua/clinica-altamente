@@ -279,7 +279,7 @@ export class AppointmentService {
     } )
 
     if ( !schedule ) {
-      return { slots: [], message: 'Profissional não atende neste dia' }
+      return { slots: [], occupiedSlots: [], appointments: [], message: 'Profissional não atende neste dia' }
     }
 
     const appointments = await prisma.appointment.findMany( {
@@ -291,10 +291,16 @@ export class AppointmentService {
           lt: new Date( targetDate.setHours( 23, 59, 59, 999 ) ),
         },
       },
+      include: {
+        patient: {
+          include: { user: { select: { name: true } } },
+        },
+      },
       orderBy: { scheduledDateTime: 'asc' },
     } )
 
     const slots: string[] = []
+    const occupiedSlots: { time: string; appointmentId: string }[] = []
     const slotDuration = 30
 
     const parseTimeToMinutes = ( timeStr: string ) => {
@@ -309,17 +315,32 @@ export class AppointmentService {
       const slotTime = new Date( targetDate )
       slotTime.setHours( Math.floor( minutes / 60 ), minutes % 60, 0, 0 )
 
-      const isAvailable = !appointments.some(
+      const conflictingAppointment = appointments.find(
         ( apt ) =>
           slotTime >= apt.scheduledDateTime && slotTime < apt.endDateTime
       )
 
-      if ( isAvailable ) {
+      if ( conflictingAppointment ) {
+        const timeStr = slotTime.toISOString()
+        if (!occupiedSlots.some(s => s.time === timeStr)) {
+          occupiedSlots.push({ time: timeStr, appointmentId: conflictingAppointment.id })
+        }
+      } else {
         slots.push( slotTime.toISOString() )
       }
     }
 
-    return { slots }
+    return { 
+      slots, 
+      occupiedSlots,
+      appointments: appointments.map(apt => ({
+        id: apt.id,
+        scheduledDateTime: apt.scheduledDateTime.toISOString(),
+        endDateTime: apt.endDateTime.toISOString(),
+        status: apt.status,
+        patientName: apt.patient.user.name,
+      }))
+    }
   }
 
   async getProfessionalByUserId(userId: string) {

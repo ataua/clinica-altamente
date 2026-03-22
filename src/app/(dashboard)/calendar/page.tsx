@@ -432,7 +432,6 @@ export default function CalendarPage() {
         selectedProfessionalId={selectedProfessionalId}
         isProfessionalOnly={isProfessionalOnly}
         myProfessionalId={myProfessionalId}
-        appointments={appointments}
         onProfessionalChange={setSelectedProfessionalId}
       />
 
