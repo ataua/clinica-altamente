@@ -1,6 +1,7 @@
 'use client'
 
-import { redirect } from 'next/navigation'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSessionContext } from '@/contexts/SessionContext'
 import { ErrorBoundary } from '@/components/providers/ErrorBoundary'
@@ -10,12 +11,16 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const router = useRouter()
   const { data: session, status } = useSessionContext()
 
-  if (status === 'unauthenticated') {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login')
     }
+  }, [status, router])
+
+  if (status === 'unauthenticated') {
     return null
   }
 

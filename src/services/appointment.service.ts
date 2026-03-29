@@ -419,6 +419,11 @@ export class AppointmentService {
                 name: true,
               },
             },
+            specialty: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
@@ -430,6 +435,7 @@ export class AppointmentService {
       patientName: apt.patient.user.name,
       professionalId: apt.professionalId,
       professionalName: apt.professional.user.name,
+      specialtyName: apt.professional.specialty?.name,
       scheduledDateTime: apt.scheduledDateTime.toISOString(),
       endDateTime: apt.endDateTime.toISOString(),
       status: apt.status,

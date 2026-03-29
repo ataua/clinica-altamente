@@ -27,6 +27,7 @@ export default function CalendarPage() {
 
   const canCreateAppointments = session?.user?.role === 'ADMIN' || session?.user?.role === 'SECRETARY'
   const isProfessionalOnly = session?.user?.role === 'PROFESSIONAL'
+  const isPatientOrResponsible = session?.user?.role === 'PATIENT' || session?.user?.role === 'RESPONSIBLE'
 
   const fetchData = useCallback(async () => {
     try {
@@ -39,12 +40,28 @@ export default function CalendarPage() {
       params.set('startDate', startOfMonth.toISOString())
       params.set('endDate', endOfMonth.toISOString())
 
-      const [appointmentsRes, patientsRes, professionalsRes, specialtiesRes] = await Promise.all([
-        fetch(`/api/calendar/appointments?${params}`),
-        fetch('/api/patients/select?limit=100'),
-        fetch('/api/professionals/select'),
-        fetch('/api/specialties/select?isActive=true'),
-      ])
+      let appointmentsRes: Response
+      let patientsRes: Response
+      let professionalsRes: Response
+      let specialtiesRes: Response
+
+      if (isPatientOrResponsible) {
+        appointmentsRes = await fetch(`/api/calendar/appointments?${params}&patientView=true`)
+        patientsRes = new Response(null, { status: 200 })
+        professionalsRes = await fetch('/api/professionals/select')
+        specialtiesRes = await fetch('/api/specialties/select?isActive=true')
+      } else {
+        const results = await Promise.all([
+          fetch(`/api/calendar/appointments?${params}`),
+          fetch('/api/patients/select?limit=100'),
+          fetch('/api/professionals/select'),
+          fetch('/api/specialties/select?isActive=true'),
+        ])
+        appointmentsRes = results[0]
+        patientsRes = results[1]
+        professionalsRes = results[2]
+        specialtiesRes = results[3]
+      }
 
       const appointmentsData = await appointmentsRes.json()
       const patientsData = await patientsRes.json()
@@ -104,7 +121,7 @@ export default function CalendarPage() {
       router.push('/login')
     } else if (status === 'authenticated') {
       const role = session?.user?.role
-      if (role !== 'ADMIN' && role !== 'SECRETARY' && role !== 'PROFESSIONAL') {
+      if (role !== 'ADMIN' && role !== 'SECRETARY' && role !== 'PROFESSIONAL' && role !== 'PATIENT' && role !== 'RESPONSIBLE') {
         router.push('/')
         return
       }
@@ -215,7 +232,7 @@ export default function CalendarPage() {
   }
 
   const handleDayClick = (date: Date) => {
-    if (!canCreateAppointments && !isProfessionalOnly) return
+    if (!canCreateAppointments && !isProfessionalOnly && !isPatientOrResponsible) return
     
     setSelectedDate(date)
     setSelectedAppointment(undefined)
@@ -243,11 +260,11 @@ export default function CalendarPage() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Calendário de Agendamentos
+                {isPatientOrResponsible ? 'Meus Agendamentos' : 'Calendário de Agendamentos'}
               </h1>
-              {isProfessionalOnly && (
+              {(isProfessionalOnly || isPatientOrResponsible) && (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Visualizando apenas seus agendamentos
+                  {isPatientOrResponsible ? 'Seus próximos atendimentos' : 'Visualizando apenas seus agendamentos'}
                 </p>
               )}
             </div>
