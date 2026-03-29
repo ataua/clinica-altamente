@@ -44,6 +44,8 @@ interface PatientModalProps {
     }
     notes: string
   }) => void
+  onResetPassword?: () => void
+  isResettingPassword?: boolean
   initialData?: {
     id: string
     name: string
@@ -67,6 +69,7 @@ interface PatientModalProps {
   responsibles: ResponsibleContact[]
   isLoading?: boolean
   errors?: Record<string, string>
+  generatedPassword?: string | null
 }
 
 const genderOptions = [
@@ -86,7 +89,7 @@ const relationshipOptions = [
   { value: 'Outro', label: 'Outro' },
 ]
 
-export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsibles, isLoading, errors: externalErrors = {} }: PatientModalProps) {
+export function PatientModal({ isOpen, onClose, onSubmit, onResetPassword, isResettingPassword, initialData, responsibles, isLoading, errors: externalErrors = {}, generatedPassword }: PatientModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -307,9 +310,37 @@ export function PatientModal({ isOpen, onClose, onSubmit, initialData, responsib
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl mx-4 my-8 overflow-y-auto max-h-[calc(100vh-4rem)]">
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 sticky top-0 bg-white dark:bg-gray-800 z-10">
-            {initialData ? 'Editar Paciente' : 'Cadastrar Novo Paciente'}
-          </h2>
+          <div className="flex justify-between items-center mb-6 sticky top-0 bg-white dark:bg-gray-800 z-10">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              {initialData ? 'Editar Paciente' : 'Cadastrar Novo Paciente'}
+            </h2>
+            {initialData && onResetPassword && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onResetPassword}
+                disabled={isResettingPassword}
+                className="text-xs"
+              >
+                {isResettingPassword ? 'Gerando...' : 'Resetar Senha'}
+              </Button>
+            )}
+          </div>
+
+          {generatedPassword && (
+            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
+                Senha de acesso do paciente:
+              </p>
+              <p className="text-lg font-bold text-green-700 dark:text-green-300 font-mono">
+                {generatedPassword}
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                Esta senha foi gerada automaticamente e deve ser fornecida ao paciente para primeiro acesso ao sistema.
+              </p>
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

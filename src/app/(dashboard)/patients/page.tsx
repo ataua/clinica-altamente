@@ -7,35 +7,7 @@ import { PatientTable } from '@/components/organisms/PatientTable'
 import { PatientModal } from '@/components/molecules/PatientModal'
 import { ResponsibleModal } from '@/components/molecules/ResponsibleModal'
 import { toast } from '@/components/ui/toast'
-
-interface ResponsibleContact {
-  id: string
-  name: string
-  email: string | null
-  phone: string
-  cpf: string | null
-  relationship: string
-}
-
-interface Patient {
-  id: string
-  name: string
-  email: string | null
-  phone: string | null
-  cpf: string | null
-  gender: string | null
-  dateOfBirth: string | null
-  address: Record<string, string> | null
-  responsibleContact: ResponsibleContact | null
-  notes: string | null
-}
-
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
+import { type Patient, type ResponsibleContact, type Pagination } from '@/types'
 
 export default function PatientsPage() {
   const { status } = useSessionContext()
@@ -50,6 +22,8 @@ export default function PatientsPage() {
   const [editingPatient, setEditingPatient] = useState<Patient | undefined>()
   const [submitting, setSubmitting] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
 
   const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false)
   const [editingResponsible, setEditingResponsible] = useState<ResponsibleContact | null>(null)
@@ -128,10 +102,18 @@ export default function PatientsPage() {
       })
 
       if (res.ok) {
+        const responseData = await res.json()
+        setGeneratedPassword(responseData.data?.generatedPassword || null)
         setIsModalOpen(false)
         setFormErrors({})
         fetchPatients()
         toast.success('Paciente criado com sucesso!')
+        if (responseData.data?.generatedPassword) {
+          toast.success('Senha de acesso gerada', {
+            description: `Senha: ${responseData.data.generatedPassword}`,
+            duration: 10000,
+          })
+        }
       } else {
         const error = await res.json()
         if (error.code === 'CONFLICT') {
@@ -229,10 +211,41 @@ export default function PatientsPage() {
     }
   }
 
+  const handleResetPassword = async (patientId: string) => {
+    try {
+      setIsResettingPassword(true)
+      const res = await fetch(`/api/patients/${patientId}/reset-password`, {
+        method: 'POST',
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setGeneratedPassword(data.data.generatedPassword)
+        toast.success('Senha resetada com sucesso!', {
+          description: `Nova senha: ${data.data.generatedPassword}`,
+          duration: 15000,
+        })
+      } else {
+        const error = await res.json()
+        toast.error('Erro ao resetar senha', {
+          description: error.error || 'Tente novamente',
+        })
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error)
+      toast.error('Erro ao resetar senha', {
+        description: 'Tente novamente mais tarde',
+      })
+    } finally {
+      setIsResettingPassword(false)
+    }
+  }
+
   const handleEditPatient = (id: string) => {
     const patient = patients.find(p => p.id === id)
     if (patient) {
       setEditingPatient(patient)
+      setGeneratedPassword(null)
       setIsModalOpen(true)
     }
   }
@@ -243,6 +256,7 @@ export default function PatientsPage() {
 
   const handleCreate = () => {
     setEditingPatient(undefined)
+    setGeneratedPassword(null)
     setIsModalOpen(true)
   }
 
@@ -324,12 +338,15 @@ export default function PatientsPage() {
 
       <PatientModal
         isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setEditingPatient(undefined); setFormErrors({}); }}
+        onClose={() => { setIsModalOpen(false); setEditingPatient(undefined); setFormErrors({}); setGeneratedPassword(null); }}
         onSubmit={editingPatient ? handleUpdatePatient : handleCreatePatient}
+        onResetPassword={editingPatient ? () => handleResetPassword(editingPatient.id) : undefined}
+        isResettingPassword={isResettingPassword}
         initialData={editingPatient}
         responsibles={responsibles}
         isLoading={submitting}
         errors={formErrors}
+        generatedPassword={generatedPassword}
       />
 
       <ResponsibleModal
