@@ -1,18 +1,33 @@
-import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import Link from 'next/link'
-import { ErrorBoundary } from '@/components/providers/ErrorBoundary'
-import { LogoutButton } from '@/components/atoms/LogoutButton'
+'use client'
 
-export default async function DashboardLayout({
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { useSessionContext } from '@/contexts/SessionContext'
+import { ErrorBoundary } from '@/components/providers/ErrorBoundary'
+
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await auth()
+  const { data: session, status } = useSessionContext()
 
-  if (!session?.user) {
-    redirect('/login')
+  if (status === 'unauthenticated') {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+    return null
+  }
+
+  if (status === 'loading' || !session?.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Carregando...</p>
+        </div>
+      </div>
+    )
   }
 
   const isAdmin = session.user.role === 'ADMIN'
@@ -123,5 +138,23 @@ export default async function DashboardLayout({
         {children}
       </ErrorBoundary>
     </div>
+  )
+}
+
+function LogoutButton() {
+  const handleLogout = async () => {
+    const { signOut } = await import('next-auth/react')
+    await signOut({ redirect: true, redirectTo: '/' })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleLogout}
+      className="text-sm text-red-600 hover:text-red-700 min-h-[44px] min-w-[44px] flex items-center justify-center"
+      aria-label="Sair da conta"
+    >
+      Sair
+    </button>
   )
 }
