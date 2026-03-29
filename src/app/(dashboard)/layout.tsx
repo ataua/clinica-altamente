@@ -17,6 +17,7 @@ export default async function DashboardLayout({
 
   const isAdmin = session.user.role === 'ADMIN'
   const isCoordinator = session.user.role === 'COORDINATOR'
+  const isPatientOrResponsible = session.user.role === 'PATIENT' || session.user.role === 'RESPONSIBLE'
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -46,28 +47,66 @@ export default async function DashboardLayout({
                     </Link>
                   </>
                 )}
-                <Link 
-                  href="/calendar" 
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                  aria-label="Calendário de consultas"
-                >
-                  Calendário
-                </Link>
-                <Link 
-                  href="/patients" 
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                  aria-label="Lista de pacientes"
-                >
-                  Pacientes
-                </Link>
-                {(isAdmin || isCoordinator) && (
-                  <Link 
-                    href="/dashboard" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                    aria-label="Dashboard e relatórios"
-                  >
-                    Dashboard
-                  </Link>
+                
+                {isPatientOrResponsible ? (
+                  <>
+                    <Link 
+                      href="/calendar" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Meus agendamentos"
+                    >
+                      Meus Agendamentos
+                    </Link>
+                    <Link 
+                      href="/profile" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Meu perfil"
+                    >
+                      Meu Perfil
+                    </Link>
+                    <Link 
+                      href="/settings/calendar" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Integrações"
+                    >
+                      Integrações
+                    </Link>
+                    {session.user.role === 'RESPONSIBLE' && (
+                      <Link 
+                        href="/responsibles" 
+                        className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                        aria-label="Portal do Responsável"
+                      >
+                        Meus Dependentes
+                      </Link>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Link 
+                      href="/calendar" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Calendário de consultas"
+                    >
+                      Calendário
+                    </Link>
+                    <Link 
+                      href="/patients" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Lista de pacientes"
+                    >
+                      Pacientes
+                    </Link>
+                    {(isAdmin || isCoordinator) && (
+                      <Link 
+                        href="/dashboard" 
+                        className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                        aria-label="Dashboard e relatórios"
+                      >
+                        Dashboard
+                      </Link>
+                    )}
+                  </>
                 )}
               </div>
             </div>
