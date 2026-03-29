@@ -386,6 +386,13 @@ describe('AppointmentService', () => {
       const today = new Date()
       const dayOfWeek = today.getDay()
 
+      await prisma.professionalSchedule.deleteMany({
+        where: {
+          professionalId: testProfessionalId,
+          dayOfWeek,
+        },
+      })
+
       await prisma.professionalSchedule.create({
         data: {
           professionalId: testProfessionalId,

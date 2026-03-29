@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         where: { id: patientId },
         include: {
           user: {
-            select: { name: true, email: true, phone: true },
+            select: { name: true, email: true },
           },
         },
       })
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       const reportData = {
         patientName: patient.user.name || 'Paciente',
         patientEmail: patient.user.email,
-        patientPhone: patient.user.phone,
+        patientPhone: patient.phone,
         period: {
           start: params.startDate?.toLocaleDateString('pt-BR') || 'Início',
           end: params.endDate?.toLocaleDateString('pt-BR') || 'Atual',

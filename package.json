@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Sistema de gestão para clínica médica",
   "author": {
-    "name": "Atuã Pinali Doederlein",
-    "email": "atua@github.com"
+    "name": "Atauã Pinali Doederlein",
+    "email": "ataua@github.com"
   },
   "private": true,
   "license": "MIT",
@@ -27,7 +27,8 @@
     "db:generate": "bunx prisma generate",
     "db:push": "bunx prisma db push",
     "db:studio": "bunx prisma studio",
-    "db:migrate": "bunx prisma migrate dev"
+    "db:migrate": "bunx prisma migrate dev",
+    "backup:cron": "bun -e \"import { backupService } from './src/services/backup.service'; backupService.createBackup().then(r => console.log(r.success ? 'Backup created' : r.error)).catch(e => console.error(e))\""
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

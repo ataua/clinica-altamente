@@ -2,14 +2,7 @@
 
 import { Badge } from '@/components/atoms/Badge'
 import { Button } from '@/components/atoms/Button'
-
-interface User {
-  id: string
-  name: string
-  email: string
-  role: 'ADMIN' | 'PROFESSIONAL' | 'SECRETARY' | 'PATIENT' | 'RESPONSIBLE' | 'TEACHER' | 'COORDINATOR'
-  createdAt: string
-}
+import { type User } from '@/types'
 
 interface UserTableProps {
   users: User[]
@@ -47,7 +40,7 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                     <span className="text-blue-600 dark:text-blue-300 text-sm font-medium">
-                      {user.name.charAt(0).toUpperCase()}
+                      {user.name?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
                   <div>
@@ -60,7 +53,7 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
                 <Badge role={user.role} />
               </td>
               <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
-                {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : '-'}
               </td>
               <td className="py-3 px-4">
                 <div className="flex justify-end gap-2">

@@ -3,23 +3,11 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/atoms/Button'
 import { Select } from '@/components/atoms/Select'
-
-interface Professional {
-  id: string
-  name: string
-}
+import { type Appointment, type Professional } from '@/types'
 
 interface OccupiedSlot {
   time: string
   appointmentId: string
-}
-
-interface Appointment {
-  id: string
-  scheduledDateTime: string
-  endDateTime: string
-  status: string
-  patientName: string
 }
 
 interface TimeSlotPickerProps {
@@ -33,13 +21,6 @@ interface TimeSlotPickerProps {
   isProfessionalOnly?: boolean
   myProfessionalId?: string | null
   onProfessionalChange?: (professionalId: string) => void
-}
-
-interface TimeSlot {
-  time: string
-  available: boolean
-  appointmentId?: string
-  appointment?: Appointment
 }
 
 export function TimeSlotPicker({

@@ -349,6 +349,93 @@ export class AppointmentService {
       select: { id: true },
     })
   }
+
+  async updateStatus(id: string, status: AppointmentStatus) {
+    const existing = await prisma.appointment.findUnique({ where: { id } })
+    if (!existing) throw new Error('Agendamento não encontrado')
+
+    return prisma.appointment.update({
+      where: { id },
+      data: { status },
+      include: {
+        patient: { include: { user: { select: { name: true } } } },
+        professional: { include: { user: { select: { name: true } } } },
+      },
+    })
+  }
+
+  async findByDateRange(params: {
+    startDate: string
+    endDate: string
+    professionalId?: string
+    patientId?: string
+    status?: string
+  }) {
+    const { startDate, endDate, professionalId, patientId, status } = params
+
+    const where: Record<string, unknown> = {
+      scheduledDateTime: {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      },
+    }
+
+    if (professionalId) {
+      where.professionalId = professionalId
+    }
+
+    if (patientId) {
+      where.patientId = patientId
+    }
+
+    if (status) {
+      where.status = status
+    }
+
+    const appointments = await prisma.appointment.findMany({
+      where,
+      orderBy: { scheduledDateTime: 'asc' },
+      select: {
+        id: true,
+        scheduledDateTime: true,
+        endDateTime: true,
+        status: true,
+        notes: true,
+        patientId: true,
+        professionalId: true,
+        patient: {
+          select: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        professional: {
+          select: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    return appointments.map((apt) => ({
+      id: apt.id,
+      patientId: apt.patientId,
+      patientName: apt.patient.user.name,
+      professionalId: apt.professionalId,
+      professionalName: apt.professional.user.name,
+      scheduledDateTime: apt.scheduledDateTime.toISOString(),
+      endDateTime: apt.endDateTime.toISOString(),
+      status: apt.status,
+      notes: apt.notes,
+    }))
+  }
 }
 
 export const appointmentService = new AppointmentService()

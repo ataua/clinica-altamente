@@ -342,8 +342,8 @@ export default function PatientsPage() {
         onSubmit={editingPatient ? handleUpdatePatient : handleCreatePatient}
         onResetPassword={editingPatient ? () => handleResetPassword(editingPatient.id) : undefined}
         isResettingPassword={isResettingPassword}
-        initialData={editingPatient}
-        responsibles={responsibles}
+        initialData={editingPatient as Parameters<typeof PatientModal>[0]['initialData']}
+        responsibles={responsibles as Parameters<typeof PatientModal>[0]['responsibles']}
         isLoading={submitting}
         errors={formErrors}
         generatedPassword={generatedPassword}

@@ -2,14 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { CalendarDay } from '@/components/molecules/CalendarDay'
-
-interface Appointment {
-  id: string
-  patientName: string
-  scheduledDateTime: string
-  endDateTime: string
-  status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
-}
+import { type Appointment } from '@/types'
 
 interface CalendarGridProps {
   appointments: Appointment[]

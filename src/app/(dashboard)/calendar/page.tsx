@@ -5,38 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useSessionContext } from '@/contexts/SessionContext'
 import { CalendarGrid } from '@/components/organisms/CalendarGrid'
 import { AppointmentModal } from '@/components/molecules/AppointmentModal'
-import { TimeSlotPicker } from '@/components/molecules/TimeSlotPicker'
 import { Button } from '@/components/atoms/Button'
 import { toast } from '@/components/ui/toast'
-
-interface Patient {
-  id: string
-  name: string
-}
-
-interface Specialty {
-  id: string
-  name: string
-}
-
-interface Professional {
-  id: string
-  name: string
-  specialtyId?: string | null
-  userId?: string
-}
-
-interface Appointment {
-  id: string
-  patientName: string
-  professionalName: string
-  scheduledDateTime: string
-  endDateTime: string
-  status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
-  notes: string | null
-  patientId: string
-  professionalId: string
-}
+import { type Patient, type Professional, type Specialty, type Appointment } from '@/types'
 
 export default function CalendarPage() {
   const { status, data: session } = useSessionContext()
@@ -44,23 +15,15 @@ export default function CalendarPage() {
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
-  const [patientLetters, setPatientLetters] = useState<string[]>([])
-  const [selectedPatientLetter, setSelectedPatientLetter] = useState<string>('')
-  const [patientSearch, setPatientSearch] = useState<string>('')
   const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [loading, setLoading] = useState(true)
   const [myProfessionalId, setMyProfessionalId] = useState<string | null>(null)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isTimeSlotPickerOpen, setIsTimeSlotPickerOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | undefined>()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
-  const [selectedSlot, setSelectedSlot] = useState<string | undefined>()
-  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
-  const [filterPatientId, setFilterPatientId] = useState<string>('')
-  const [filterProfessionalId, setFilterProfessionalId] = useState<string>('')
 
   const canCreateAppointments = session?.user?.role === 'ADMIN' || session?.user?.role === 'SECRETARY'
   const isProfessionalOnly = session?.user?.role === 'PROFESSIONAL'
@@ -75,26 +38,10 @@ export default function CalendarPage() {
       const params = new URLSearchParams()
       params.set('startDate', startOfMonth.toISOString())
       params.set('endDate', endOfMonth.toISOString())
-      params.set('limit', '100')
-
-      if (filterPatientId) {
-        params.set('patientId', filterPatientId)
-      }
-      if (filterProfessionalId) {
-        params.set('professionalId', filterProfessionalId)
-      }
-
-      const patientParams = new URLSearchParams()
-      if (selectedPatientLetter) {
-        patientParams.set('letter', selectedPatientLetter)
-      } else if (patientSearch) {
-        patientParams.set('search', patientSearch)
-      }
-      patientParams.set('limit', '50')
 
       const [appointmentsRes, patientsRes, professionalsRes, specialtiesRes] = await Promise.all([
-        fetch(`/api/appointments?${params}`),
-        fetch(`/api/patients/select?${patientParams}`),
+        fetch(`/api/calendar/appointments?${params}`),
+        fetch('/api/patients/select?limit=100'),
         fetch('/api/professionals/select'),
         fetch('/api/specialties/select?isActive=true'),
       ])
@@ -104,15 +51,19 @@ export default function CalendarPage() {
       const professionalsData = await professionalsRes.json()
       const specialtiesData = await specialtiesRes.json()
 
-      if (appointmentsRes.ok) {
+      if (!appointmentsRes.ok) {
+        console.error('Failed to fetch appointments:', appointmentsData)
+        toast.error('Erro ao carregar agendamentos', {
+          description: appointmentsData.message || 'Tente novamente',
+        })
+        setAppointments([])
+      } else {
         setAppointments(appointmentsData.data || [])
       }
+
       if (patientsRes.ok) {
         const patientsList = (patientsData.data?.patients || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name }))
         setPatients(patientsList)
-        if (patientsData.data?.letters) {
-          setPatientLetters(patientsData.data.letters)
-        }
       }
       if (specialtiesRes.ok) {
         const specialtiesList = (specialtiesData.data?.specialties || []).map((s: { id: string; name: string }) => ({
@@ -130,7 +81,7 @@ export default function CalendarPage() {
         }))
         setProfessionals(professionalsList)
         
-        if (session?.user?.role === 'PROFESSIONAL' && session?.user?.id) {
+        if (isProfessionalOnly && session?.user?.id) {
           const myProfessional = professionalsList.find((p: Professional) => p.userId === session.user.id)
           if (myProfessional) {
             setMyProfessionalId(myProfessional.id)
@@ -142,10 +93,11 @@ export default function CalendarPage() {
       toast.error('Erro ao carregar dados', {
         description: 'Não foi possível carregar os dados do calendário',
       })
+      setAppointments([])
     } finally {
       setLoading(false)
     }
-  }, [session?.user?.id, session?.user?.role, filterPatientId, filterProfessionalId, selectedPatientLetter, patientSearch])
+  }, [session?.user?.id, isProfessionalOnly])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -257,6 +209,8 @@ export default function CalendarPage() {
       setSelectedAppointment(appointment)
       setSelectedDate(undefined)
       setIsModalOpen(true)
+    } else {
+      toast.error('Agendamento não encontrado')
     }
   }
 
@@ -265,63 +219,13 @@ export default function CalendarPage() {
     
     setSelectedDate(date)
     setSelectedAppointment(undefined)
-    
-    if (isProfessionalOnly) {
-      setIsModalOpen(true)
-    } else {
-      setIsTimeSlotPickerOpen(true)
-    }
-  }
-
-  const handleSlotSelect = (time: string, professionalId: string) => {
-    const dateStr = selectedDate?.toISOString().split('T')[0]
-    setSelectedSlot(`${dateStr}T${time}:00.000Z`)
-    setSelectedProfessionalId(professionalId)
-    setIsTimeSlotPickerOpen(false)
     setIsModalOpen(true)
-  }
-
-  const handleEditAppointmentFromSlot = (appointmentId: string) => {
-    const appointment = appointments.find((a) => a.id === appointmentId)
-    if (appointment) {
-      setSelectedAppointment(appointment)
-      setSelectedDate(undefined)
-      setIsTimeSlotPickerOpen(false)
-      setIsModalOpen(true)
-    }
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedAppointment(undefined)
     setSelectedDate(undefined)
-    setSelectedSlot(undefined)
-    setSelectedProfessionalId('')
-  }
-
-  const handleCloseTimeSlotPicker = () => {
-    setIsTimeSlotPickerOpen(false)
-    setSelectedDate(undefined)
-  }
-
-  const handleFilterPatientChange = (patientId: string) => {
-    setFilterPatientId(patientId)
-    setFilterProfessionalId('')
-    fetchData()
-  }
-
-  const handleFilterProfessionalChange = (professionalId: string) => {
-    setFilterProfessionalId(professionalId)
-    setFilterPatientId('')
-    fetchData()
-  }
-
-  const clearFilters = () => {
-    setFilterPatientId('')
-    setFilterProfessionalId('')
-    setPatientSearch('')
-    setSelectedPatientLetter('')
-    fetchData()
   }
 
   if (status === 'loading' || loading) {
@@ -347,87 +251,15 @@ export default function CalendarPage() {
                 </p>
               )}
             </div>
+            
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Paciente:</label>
-                <input
-                  type="text"
-                  value={patientSearch}
-                  onChange={(e) => {
-                    setPatientSearch(e.target.value)
-                    setSelectedPatientLetter('')
-                  }}
-                  placeholder="Buscar paciente..."
-                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => {
-                    setSelectedPatientLetter('')
-                    setPatientSearch('')
-                    fetchData()
-                  }}
-                  className={`px-2 py-1 text-xs rounded ${!selectedPatientLetter && !patientSearch ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                >
-                  Todos
-                </button>
-                {patientLetters.map((letter) => (
-                  <button
-                    key={letter}
-                    onClick={() => {
-                      setSelectedPatientLetter(letter)
-                      setPatientSearch('')
-                      fetchData()
-                    }}
-                    className={`px-2 py-1 text-xs rounded ${selectedPatientLetter === letter ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                  >
-                    {letter}
-                  </button>
-                ))}
-              </div>
-              <select
-                value={filterPatientId}
-                onChange={(e) => handleFilterPatientChange(e.target.value)}
-                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-              >
-                <option value="">Selecione...</option>
-                {patients.map((patient) => (
-                  <option key={patient.id} value={patient.id}>
-                    {patient.name}
-                  </option>
-                ))}
-              </select>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Profissional:</label>
-                <select
-                  value={filterProfessionalId}
-                  onChange={(e) => handleFilterProfessionalChange(e.target.value)}
-                  className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
-                >
-                  <option value="">Todos</option>
-                  {professionals.map((professional) => (
-                    <option key={professional.id} value={professional.id}>
-                      {professional.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {(filterPatientId || filterProfessionalId) && (
-                <button
-                  onClick={clearFilters}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 whitespace-nowrap"
-                >
-                  Limpar
-                </button>
-              )}
               {canCreateAppointments && (
                 <Button onClick={() => { 
                   setSelectedAppointment(undefined); 
                   setSelectedDate(new Date()); 
-                  setIsTimeSlotPickerOpen(true);
+                  setIsModalOpen(true);
                 }}>
-                  + Novo
+                  + Novo Agendamento
                 </Button>
               )}
             </div>
@@ -473,19 +305,6 @@ export default function CalendarPage() {
         </div>
       </main>
 
-      <TimeSlotPicker
-        isOpen={isTimeSlotPickerOpen}
-        onClose={handleCloseTimeSlotPicker}
-        onSelectSlot={handleSlotSelect}
-        onEditAppointment={handleEditAppointmentFromSlot}
-        date={selectedDate?.toISOString().split('T')[0] || ''}
-        professionals={professionals}
-        selectedProfessionalId={selectedProfessionalId}
-        isProfessionalOnly={isProfessionalOnly}
-        myProfessionalId={myProfessionalId}
-        onProfessionalChange={setSelectedProfessionalId}
-      />
-
       <AppointmentModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -496,11 +315,12 @@ export default function CalendarPage() {
         patients={patients}
         professionals={professionals}
         specialties={specialties}
-        selectedSlot={selectedSlot || selectedDate?.toISOString()}
+        selectedSlot={selectedDate?.toISOString()}
         isLoading={submitting}
         isProfessionalOnly={isProfessionalOnly}
-        myProfessionalId={isProfessionalOnly ? myProfessionalId : selectedProfessionalId}
-        forcedProfessionalId={isProfessionalOnly ? undefined : selectedProfessionalId}
+        myProfessionalId={isProfessionalOnly ? myProfessionalId : undefined}
+        forcedProfessionalId={isProfessionalOnly ? myProfessionalId || undefined : undefined}
+        userRole={session?.user?.role}
       />
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSessionContext } from '@/contexts/SessionContext'
 import { Button } from '@/components/atoms/Button'
@@ -9,21 +9,7 @@ import { Select } from '@/components/atoms/Select'
 import { UserTable } from '@/components/organisms/UserTable'
 import { UserModal } from '@/components/molecules/UserModal'
 import { toast } from '@/components/ui/toast'
-
-interface User {
-  id: string
-  name: string
-  email: string
-  role: 'ADMIN' | 'PROFESSIONAL' | 'SECRETARY' | 'PATIENT' | 'RESPONSIBLE' | 'TEACHER' | 'COORDINATOR'
-  createdAt: string
-}
-
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
+import { type User, type Pagination } from '@/types'
 
 export default function UsersPage() {
   const { data: session, status } = useSessionContext()
@@ -34,6 +20,21 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current)
+    }
+    searchTimeout.current = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPagination(p => ({ ...p, page: 1 }))
+    }, 300)
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    }
+  }, [search])
   
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<{ id?: string; name: string; email: string; role: string } | undefined>()
@@ -46,7 +47,7 @@ export default function UsersPage() {
       const params = new URLSearchParams()
       params.set('page', pagination.page.toString())
       params.set('limit', pagination.limit.toString())
-      if (search) params.set('search', search)
+      if (debouncedSearch) params.set('search', debouncedSearch)
       if (roleFilter) params.set('role', roleFilter)
 
       const res = await fetch(`/api/users?${params}`)
@@ -64,7 +65,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
-  }, [pagination.page, pagination.limit, search, roleFilter])
+  }, [pagination.page, pagination.limit, debouncedSearch, roleFilter])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -183,7 +184,7 @@ export default function UsersPage() {
   const handleEditUser = (id: string) => {
     const user = users.find(u => u.id === id)
     if (user) {
-      setEditingUser({ id, name: user.name, email: user.email, role: user.role })
+      setEditingUser({ id, name: user.name || '', email: user.email || '', role: user.role })
       setIsModalOpen(true)
     }
   }
@@ -223,13 +224,15 @@ export default function UsersPage() {
           </div>
           <Select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e) => { setRoleFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
             options={[
               { value: '', label: 'Todos os perfis' },
               { value: 'ADMIN', label: 'Administrador' },
               { value: 'PROFESSIONAL', label: 'Profissional' },
               { value: 'SECRETARY', label: 'Recepcionista' },
               { value: 'PATIENT', label: 'Paciente' },
+              { value: 'RESPONSIBLE', label: 'Responsável' },
+              { value: 'TEACHER', label: 'Professor' },
               { value: 'COORDINATOR', label: 'Coordenador' },
             ]}
             className="w-full sm:w-48"

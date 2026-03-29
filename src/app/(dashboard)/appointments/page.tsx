@@ -7,25 +7,10 @@ import { Input } from '@/components/atoms/Input'
 import { Select } from '@/components/atoms/Select'
 import { Button } from '@/components/atoms/Button'
 import { AppointmentStatusBadge } from '@/components/atoms/AppointmentStatusBadge'
+import { AppointmentActionModal } from '@/components/molecules/AppointmentActionModal'
+import { AttendanceModal } from '@/components/molecules/AttendanceModal'
 import { toast } from '@/components/ui/toast'
-
-interface Appointment {
-  id: string
-  patientName: string
-  professionalName: string
-  scheduledDateTime: string
-  endDateTime: string
-  status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
-  notes: string | null
-  cancellationReason: string | null
-}
-
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
+import { type Appointment, type Pagination } from '@/types'
 
 const statusOptions = [
   { value: '', label: 'Todos os status' },
@@ -46,6 +31,30 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [actionModal, setActionModal] = useState<{
+    isOpen: boolean
+    type: 'cancel' | 'reschedule'
+    appointmentId: string | null
+  }>({ isOpen: false, type: 'cancel', appointmentId: null })
+  const [attendanceModal, setAttendanceModal] = useState<{
+    isOpen: boolean
+    appointmentId: string | null
+    attendanceId: string | null
+    patientId: string | null
+    professionalId: string | null
+    patientName: string | null
+    professionalName: string | null
+    appointmentDate: string | null
+  }>({
+    isOpen: false,
+    appointmentId: null,
+    attendanceId: null,
+    patientId: null,
+    professionalId: null,
+    patientName: null,
+    professionalName: null,
+    appointmentDate: null,
+  })
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -89,57 +98,48 @@ export default function AppointmentsPage() {
     }
   }, [status, router, fetchAppointments])
 
-  const handleCancelAppointment = async (id: string) => {
-    const reason = prompt('Motivo do cancelamento:')
-    if (!reason) return
-
-    try {
-      const res = await fetch(`/api/appointments/${id}/cancel`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
-      })
-
-      if (res.ok) {
-        fetchAppointments()
-        toast.success('Agendamento cancelado com sucesso!')
-      } else {
-        const error = await res.json()
-        toast.error('Erro ao cancelar agendamento', {
-          description: error.message || 'Tente novamente',
-        })
-      }
-    } catch (error) {
-      console.error('Error cancelling appointment:', error)
-      toast.error('Erro ao cancelar agendamento', {
-        description: 'Tente novamente mais tarde',
-      })
-    }
+  const handleCancelAppointment = (id: string) => {
+    setActionModal({ isOpen: true, type: 'cancel', appointmentId: id })
   }
 
-  const handleReschedule = async (id: string) => {
-    const newDateTime = prompt('Nova data/hora (YYYY-MM-DDTHH:mm):')
-    if (!newDateTime) return
+  const handleReschedule = (id: string) => {
+    setActionModal({ isOpen: true, type: 'reschedule', appointmentId: id })
+  }
+
+  const handleActionSubmit = async (value: string) => {
+    if (!actionModal.appointmentId) return
+
+    const appointmentId = actionModal.appointmentId
+    setActionModal({ isOpen: false, type: 'cancel', appointmentId: null })
 
     try {
-      const res = await fetch(`/api/appointments/${id}/reschedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scheduledDateTime: newDateTime }),
-      })
+      let res: Response
+      if (actionModal.type === 'cancel') {
+        res = await fetch(`/api/appointments/${appointmentId}/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: value }),
+        })
+      } else {
+        res = await fetch(`/api/appointments/${appointmentId}/reschedule`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scheduledDateTime: value }),
+        })
+      }
 
       if (res.ok) {
         fetchAppointments()
-        toast.success('Agendamento reagendado com sucesso!')
+        toast.success(actionModal.type === 'cancel' ? 'Agendamento cancelado com sucesso!' : 'Agendamento reagendado com sucesso!')
       } else {
         const error = await res.json()
-        toast.error('Erro ao reagendar', {
+        toast.error(`Erro ao ${actionModal.type === 'cancel' ? 'cancelar' : 'reagendar'} agendamento`, {
           description: error.message || 'Tente novamente',
         })
       }
     } catch (error) {
-      console.error('Error rescheduling appointment:', error)
-      toast.error('Erro ao reagendar', {
+      console.error(`Error ${actionModal.type}ing appointment:`, error)
+      toast.error(`Erro ao ${actionModal.type === 'cancel' ? 'cancelar' : 'reagendar'} agendamento`, {
         description: 'Tente novamente mais tarde',
       })
     }
@@ -165,37 +165,66 @@ export default function AppointmentsPage() {
   }
 
   const handleStart = async (id: string) => {
+    const appointment = appointments.find(a => a.id === id)
+    if (!appointment) return
+
     try {
-      const res = await fetch(`/api/appointments/${id}`, {
-        method: 'PUT',
+      const res = await fetch(`/api/appointments/${id}/start`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'IN_PROGRESS' }),
       })
 
       if (res.ok) {
+        const data = await res.json()
         fetchAppointments()
-        toast.success('Atendimento iniciado!')
+        setAttendanceModal({
+          isOpen: true,
+          appointmentId: id,
+          attendanceId: data.data?.id || null,
+          patientId: appointment.patientId,
+          professionalId: appointment.professionalId,
+          patientName: appointment.patientName,
+          professionalName: appointment.professionalName,
+          appointmentDate: appointment.scheduledDateTime,
+        })
       } else {
-        toast.error('Erro ao iniciar atendimento')
+        const error = await res.json()
+        toast.error(error.message || 'Erro ao iniciar atendimento')
       }
     } catch {
       toast.error('Erro ao iniciar atendimento')
     }
   }
 
-  const handleComplete = async (id: string) => {
+  const handleCompleteAttendance = async (attendanceData: {
+    appointmentId: string
+    patientId: string
+    professionalId: string
+    startTime: string
+    notes?: string
+    observations?: string
+    diagnosis?: string
+    treatmentPlan?: string
+  }) => {
+    if (!attendanceModal.attendanceId) {
+      toast.error('ID do atendimento não encontrado')
+      return
+    }
+
     try {
-      const res = await fetch(`/api/appointments/${id}`, {
-        method: 'PUT',
+      const res = await fetch(`/api/attendances/${attendanceModal.attendanceId}/complete`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'COMPLETED' }),
+        body: JSON.stringify(attendanceData),
       })
 
       if (res.ok) {
+        setAttendanceModal(prev => ({ ...prev, isOpen: false }))
         fetchAppointments()
-        toast.success('Atendimento concluído!')
+        toast.success('Atendimento concluído com sucesso!')
       } else {
-        toast.error('Erro ao concluir atendimento')
+        const error = await res.json()
+        toast.error(error.message || 'Erro ao concluir atendimento')
       }
     } catch {
       toast.error('Erro ao concluir atendimento')
@@ -218,6 +247,26 @@ export default function AppointmentsPage() {
       }
     } catch {
       toast.error('Erro ao registrar ausência')
+    }
+  }
+
+  const handleOpenAttendanceModal = async (appointment: Appointment) => {
+    try {
+      const res = await fetch(`/api/attendances/by-appointment/${appointment.id}`)
+      const data = await res.json()
+      
+      setAttendanceModal({
+        isOpen: true,
+        appointmentId: appointment.id,
+        attendanceId: data.data?.id || null,
+        patientId: appointment.patientId,
+        professionalId: appointment.professionalId,
+        patientName: appointment.patientName,
+        professionalName: appointment.professionalName,
+        appointmentDate: appointment.scheduledDateTime,
+      })
+    } catch {
+      toast.error('Erro ao carregar dados do atendimento')
     }
   }
 
@@ -344,10 +393,10 @@ export default function AppointmentsPage() {
                           )}
                           {apt.status === 'IN_PROGRESS' && (
                             <button
-                              onClick={() => handleComplete(apt.id)}
+                              onClick={() => handleOpenAttendanceModal(apt)}
                               className="text-sm text-green-600 hover:text-green-700 font-medium"
                             >
-                              Concluir
+                              Registrar Atendimento
                             </button>
                           )}
                           {(apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED' || apt.status === 'IN_PROGRESS') && (
@@ -402,6 +451,34 @@ export default function AppointmentsPage() {
           )}
         </div>
       </main>
+
+      <AppointmentActionModal
+        isOpen={actionModal.isOpen}
+        onClose={() => setActionModal({ isOpen: false, type: 'cancel', appointmentId: null })}
+        onSubmit={handleActionSubmit}
+        type={actionModal.type}
+      />
+
+      <AttendanceModal
+        isOpen={attendanceModal.isOpen}
+        onClose={() => setAttendanceModal(prev => ({ ...prev, isOpen: false }))}
+        onSubmit={handleCompleteAttendance}
+        appointmentId={attendanceModal.appointmentId || ''}
+        patientId={attendanceModal.patientId || ''}
+        professionalId={attendanceModal.professionalId || ''}
+        patientName={attendanceModal.patientName || ''}
+        professionalName={attendanceModal.professionalName || ''}
+        appointmentDate={attendanceModal.appointmentDate || ''}
+        initialData={attendanceModal.attendanceId ? {
+          id: attendanceModal.attendanceId,
+          notes: null,
+          observations: null,
+          diagnosis: null,
+          treatmentPlan: null,
+          status: 'IN_PROGRESS'
+        } : undefined}
+        isEditMode={!!attendanceModal.attendanceId}
+      />
     </div>
   )
 }

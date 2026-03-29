@@ -1,19 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSessionContext } from '@/contexts/SessionContext'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Select } from '@/components/atoms/Select'
 import { toast } from '@/components/ui/toast'
-
-interface Specialty {
-  id: string
-  name: string
-  description?: string | null
-  isActive?: boolean
-}
+import { type Specialty } from '@/types'
 
 interface Professional {
   id: string
@@ -145,8 +139,17 @@ export default function ProfessionalsPage() {
   const [specialtyId, setSpecialtyId] = useState('')
   const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [specialtyFilter, setSpecialtyFilter] = useState('')
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null)
   const [licenseNumber, setLicenseNumber] = useState('')
   const [bio, setBio] = useState('')
+
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current) }
+  }, [search])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -200,12 +203,19 @@ export default function ProfessionalsPage() {
   }
 
   useEffect(() => {
+    let filtered = professionals
     if (specialtyFilter) {
-      setFilteredProfessionals(professionals.filter(p => p.specialty?.id === specialtyFilter))
-    } else {
-      setFilteredProfessionals(professionals)
+      filtered = filtered.filter(p => p.specialty?.id === specialtyFilter)
     }
-  }, [specialtyFilter, professionals])
+    if (debouncedSearch) {
+      const term = debouncedSearch.toLowerCase()
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(term) || 
+        p.email.toLowerCase().includes(term)
+      )
+    }
+    setFilteredProfessionals(filtered)
+  }, [specialtyFilter, debouncedSearch, professionals])
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -375,6 +385,13 @@ export default function ProfessionalsPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex gap-4 items-end">
           <div className="flex-1">
+            <Input
+              placeholder="Buscar por nome ou email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="w-64">
             <Select
               id="specialtyFilter"
               label="Filtrar por Especialidade"

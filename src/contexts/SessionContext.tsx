@@ -11,26 +11,6 @@ interface SessionContextValue {
   update: (data?: Session | null) => Promise<Session | null>
 }
 
-interface SessionContextData {
-  session: Session | null
-  loading: boolean
-}
-
-const ROLES_LONG_CACHE = ['ADMIN', 'SECRETARY', 'PROFESSIONAL', 'COORDINATOR']
-const LONG_CACHE_TTL = 7 * 24 * 60 * 60 * 1000
-const SHORT_CACHE_TTL = 10 * 60 * 1000
-
-function getTTLForRole(role: string | undefined): number {
-  if (!role) return SHORT_CACHE_TTL
-  return ROLES_LONG_CACHE.includes(role) ? LONG_CACHE_TTL : SHORT_CACHE_TTL
-}
-
-function isCacheValid(session: Session | null, lastFetch: number | null): boolean {
-  if (!session || !lastFetch) return false
-  const ttl = getTTLForRole(session.user?.role)
-  return Date.now() - lastFetch < ttl
-}
-
 const SessionContext = createContext<SessionContextValue | undefined>(undefined)
 
 export function SessionContextProvider({ 
@@ -42,12 +22,10 @@ export function SessionContextProvider({
 }) {
   const [session, setSession] = useState<Session | null>(initialSession)
   const [loading, setLoading] = useState(false)
-  const [lastFetch, setLastFetch] = useState<number | null>(null)
 
   useEffect(() => {
     if (initialSession) {
       setSession(initialSession)
-      setLastFetch(Date.now())
     }
   }, [initialSession])
 
@@ -68,14 +46,12 @@ export function SessionContextProvider({
     if (data === null) {
       setSession(null)
       setLoading(false)
-      setLastFetch(null)
       return null
     }
 
     if (data) {
       setSession(data)
       setLoading(false)
-      setLastFetch(Date.now())
       return data
     }
 
@@ -85,7 +61,6 @@ export function SessionContextProvider({
     
     setSession(newSession)
     setLoading(false)
-    setLastFetch(Date.now())
     
     return newSession
   }, [fetchNewSession])

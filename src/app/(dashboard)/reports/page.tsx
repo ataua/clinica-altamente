@@ -3,11 +3,21 @@
 import { useState, useEffect } from 'react'
 import { useSessionContext } from '@/contexts/SessionContext'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
+import { toast } from '@/components/ui/toast'
+
+const ALLOWED_ROLES = ['ADMIN', 'COORDINATOR']
 
 export default function ReportsPage() {
-  const { status } = useSessionContext()
+  const { status, data: session } = useSessionContext()
   const router = useRouter()
+
+  const userRole = session?.user?.role
+
+  useEffect(() => {
+    if (status === 'authenticated' && userRole && !ALLOWED_ROLES.includes(userRole)) {
+      router.push('/')
+    }
+  }, [status, userRole, router])
   const [loading, setLoading] = useState(false)
   const [reportType, setReportType] = useState<'individual' | 'consolidated'>('consolidated')
   const [patientId, setPatientId] = useState('')

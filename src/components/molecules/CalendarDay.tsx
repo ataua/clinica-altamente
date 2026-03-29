@@ -1,14 +1,7 @@
 'use client'
 
 import { CalendarEvent } from '@/components/atoms/CalendarEvent'
-
-interface Appointment {
-  id: string
-  patientName: string
-  scheduledDateTime: string
-  endDateTime: string
-  status: 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
-}
+import { type Appointment } from '@/types'
 
 interface CalendarDayProps {
   date: Date

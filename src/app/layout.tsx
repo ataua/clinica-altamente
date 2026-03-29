@@ -27,11 +27,11 @@ export const metadata: Metadata = {
     template: "%s | Clínica Altamente",
   },
   description: "Sistema de Gestão de Consultas e Relatórios para clínicas médicas. Agende consultas, gerencie pacientes e acompanhe relatórios.",
-  keywords: ["clínica", "agendamento", "consultas", "médico", "saúde", "gestão", "pacientes"],
-  authors: [{ name: "Atuã Pinali" }],
-  creator: "Atuã Pinali",
+  keywords: [ "clínica", "agendamento", "consultas", "médico", "saúde", "gestão", "pacientes" ],
+  authors: [ { name: "Atauã Pinali Doederlein" } ],
+  creator: "Atauã Pinali Doederlein",
   publisher: "Clínica Altamente",
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://clinica-altamente.com'),
+  metadataBase: new URL( process.env.NEXTAUTH_URL || 'https://clinica-altamente.com' ),
   openGraph: {
     type: "website",
     locale: "pt_BR",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Clínica Altamente",
     description: "Sistema de Gestão de Consultas e Relatórios",
-    images: ["/og-image.png"],
+    images: [ "/og-image.png" ],
   },
   robots: {
     index: true,
@@ -83,16 +83,16 @@ export default async function RootLayout ( {
       <body
         className={ `${ geistSans.variable } ${ geistMono.variable } antialiased` }
       >
-        <AuthProvider session={session}>
-          <Toaster 
-            position="top-right" 
-            richColors 
-            toastOptions={{
+        <AuthProvider session={ session }>
+          <Toaster
+            position="top-right"
+            richColors
+            toastOptions={ {
               style: {
                 background: '#fff',
                 border: '1px solid #e5e7eb',
               },
-            }}
+            } }
           />
           { children }
         </AuthProvider>

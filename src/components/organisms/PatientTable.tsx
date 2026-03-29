@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Input } from '@/components/atoms/Input'
 import { Button } from '@/components/atoms/Button'
 import { PatientCard } from '@/components/molecules/PatientCard'
+import { type Patient } from '@/types'
 
 interface ResponsibleContact {
   id: string
@@ -12,17 +13,6 @@ interface ResponsibleContact {
   phone: string
   cpf: string | null
   relationship: string
-}
-
-interface Patient {
-  id: string
-  name: string
-  email: string | null
-  phone: string | null
-  cpf: string | null
-  gender: string | null
-  dateOfBirth: string | null
-  responsibleContact: ResponsibleContact | null
 }
 
 interface PatientTableProps {

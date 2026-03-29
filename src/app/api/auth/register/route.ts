@@ -5,7 +5,7 @@ import { hashPassword } from "@/lib/bcrypt";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, role } = body;
+    const { name, email, password, role, phone } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -26,21 +26,36 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedPassword = await hashPassword(password);
+    const userRole = role || "PATIENT";
+    const isPatient = userRole === "PATIENT";
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role || "PATIENT",
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: userRole as "PATIENT" | "ADMIN" | "PROFESSIONAL" | "SECRETARY" | "RESPONSIBLE" | "TEACHER" | "COORDINATOR",
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      if (isPatient) {
+        await tx.patient.create({
+          data: {
+            userId: newUser.id,
+            phone: phone || null,
+          },
+        });
+      }
+
+      return newUser;
     });
 
     return NextResponse.json(

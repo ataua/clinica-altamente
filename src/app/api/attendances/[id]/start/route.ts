@@ -5,5 +5,5 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return attendanceController.start(params)
+  return attendanceController.startAttendance(request, params)
 }

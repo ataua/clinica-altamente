@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { hashPassword } from '@/lib/bcrypt'
 
 export class PatientService {
   async findAll(params: {
@@ -145,9 +146,16 @@ export class PatientService {
     })
   }
 
+  private generatePatientPassword(): string {
+    const timestamp = Date.now()
+    const hash = String(timestamp).slice(-6)
+    return `Paciente#${hash}`
+  }
+
   async create(data: {
     name: string
     email?: string
+    password?: string
     phone?: string
     cpf?: string
     dateOfBirth?: string
@@ -194,10 +202,14 @@ export class PatientService {
       }
     }
 
+    const plainPassword = this.generatePatientPassword()
+    const hashedPassword = await hashPassword(plainPassword)
+
     const user = await prisma.user.create({
       data: {
         name: data.name,
         email: data.email ?? null,
+        password: hashedPassword,
       },
     })
 
@@ -207,7 +219,7 @@ export class PatientService {
       emergencyPhone = contact?.phone ?? null;
     }
 
-    return prisma.patient.create({
+    const patient = await prisma.patient.create({
       data: {
         user: { connect: { id: user.id } },
         phone: data.phone ?? null,
@@ -219,6 +231,11 @@ export class PatientService {
         observations: data.notes ?? null,
       },
     })
+
+    return {
+      ...patient,
+      generatedPassword: plainPassword,
+    }
   }
 
   async update(id: string, data: {
