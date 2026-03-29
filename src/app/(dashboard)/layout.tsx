@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import Link from 'next/link'
 import { ErrorBoundary } from '@/components/providers/ErrorBoundary'
+import { LogoutButton } from '@/components/atoms/LogoutButton'
 
 export default async function DashboardLayout({
   children,
@@ -74,19 +75,7 @@ export default async function DashboardLayout({
               <span className="text-sm text-gray-600 dark:text-gray-300" aria-label={`Usuário: ${session.user.name}`}>
                 {session.user.name}
               </span>
-              <form action={async () => {
-                'use server'
-                const { signOut } = await import('@/lib/auth')
-                await signOut({ redirect: true, redirectTo: '/' })
-              }}>
-                <button
-                  type="submit"
-                  className="text-sm text-red-600 hover:text-red-700 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                  aria-label="Sair da conta"
-                >
-                  Sair
-                </button>
-              </form>
+              <LogoutButton />
             </div>
           </div>
         </div>

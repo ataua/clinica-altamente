@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { update: updateSession } = useSession()
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +54,9 @@ export default function LoginPage() {
         });
       } else {
         toast.success("Login realizado com sucesso!");
+        await updateSession()
         router.push("/");
+        router.refresh();
       }
     } catch {
       setErrors({ email: "Erro ao fazer login" });
