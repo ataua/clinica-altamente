@@ -37,6 +37,7 @@ export default function DashboardLayout({
 
   const isAdmin = session.user.role === 'ADMIN'
   const isCoordinator = session.user.role === 'COORDINATOR'
+  const isProfessional = session.user.role === 'PROFESSIONAL'
   const isPatientOrResponsible = session.user.role === 'PATIENT' || session.user.role === 'RESPONSIBLE'
 
   return (
@@ -98,6 +99,25 @@ export default function DashboardLayout({
                         aria-label="Portal do Responsável"
                       >
                         Meus Dependentes
+                      </Link>
+                    )}
+                  </>
+                ) : isProfessional ? (
+                  <>
+                    <Link 
+                      href="/calendar" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Calendário de consultas"
+                    >
+                      Agendamentos
+                    </Link>
+                    {(isAdmin || isCoordinator) && (
+                      <Link 
+                        href="/dashboard" 
+                        className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                        aria-label="Dashboard e relatórios"
+                      >
+                        Dashboard
                       </Link>
                     )}
                   </>

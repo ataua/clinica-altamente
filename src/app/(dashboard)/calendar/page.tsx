@@ -40,12 +40,15 @@ export default function CalendarPage() {
       params.set('startDate', startOfMonth.toISOString())
       params.set('endDate', endOfMonth.toISOString())
 
+      const userRole = session?.user?.role
+      const isPatientOrResponsibleUser = userRole === 'PATIENT' || userRole === 'RESPONSIBLE'
+
       let appointmentsRes: Response
       let patientsRes: Response
       let professionalsRes: Response
       let specialtiesRes: Response
 
-      if (isPatientOrResponsible) {
+      if (isPatientOrResponsibleUser) {
         appointmentsRes = await fetch(`/api/calendar/appointments?${params}&patientView=true`)
         patientsRes = new Response(null, { status: 200 })
         professionalsRes = await fetch('/api/professionals/select')
@@ -114,7 +117,7 @@ export default function CalendarPage() {
     } finally {
       setLoading(false)
     }
-  }, [session?.user?.id, isProfessionalOnly])
+  }, [session?.user?.id])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
