@@ -82,7 +82,7 @@ export default function Dashboard() {
           const today = new Date()
           today.setHours(0, 0, 0, 0)
           const futureAppointments = (data.data || []).filter((apt: Appointment) => 
-            new Date(apt.scheduledDateTime) >= today
+            new Date(apt.scheduledDateTime) >= today && apt.status !== 'CANCELLED'
           )
           setMyAppointments(futureAppointments)
         }
@@ -583,10 +583,29 @@ export default function Dashboard() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Você está cancelando a consulta de <strong>{selectedAppointment.specialtyName || 'Especialidade'}</strong> com <strong>Dr(a). {selectedAppointment.professionalName || 'Profissional'}</strong> em {new Date(selectedAppointment.scheduledDateTime).toLocaleDateString('pt-BR')} às {new Date(selectedAppointment.scheduledDateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.
             </p>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault()
-              console.log('Cancel reason:', cancelReason, 'Details:', cancelDetails)
-              toast.success('Agendamento cancelado com sucesso!')
+              
+              const fullReason = cancelReason === 'other' ? cancelDetails : cancelReason
+              
+              try {
+                const res = await fetch(`/api/appointments/${selectedAppointment.id}/cancel`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ reason: fullReason }),
+                })
+
+                if (res.ok) {
+                  toast.success('Agendamento cancelado com sucesso!')
+                  setMyAppointments(prev => prev.filter(apt => apt.id !== selectedAppointment.id))
+                } else {
+                  const data = await res.json()
+                  toast.error(data.message || 'Erro ao cancelar agendamento')
+                }
+              } catch {
+                toast.error('Erro ao cancelar agendamento')
+              }
+              
               setShowCancelModal(false)
               setSelectedAppointment(null)
               setCancelReason('')

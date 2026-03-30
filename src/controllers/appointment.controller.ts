@@ -4,6 +4,7 @@ import { appointmentService } from '@/services/appointment.service'
 import { CreateAppointmentDTO, UpdateAppointmentDTO, AppointmentFilterDTO } from '@/dtos/appointment.dto'
 import { success, created, error, notFound, paginated } from '@/lib/response'
 import { generateAppointmentLinks } from '@/lib/hateoas'
+import { prisma } from '@/lib/prisma'
 
 export class AppointmentController extends BaseController {
   async findAll(request: NextRequest) {
@@ -136,8 +137,28 @@ export class AppointmentController extends BaseController {
 
   async cancel(request: NextRequest, params: Promise<{ id: string }>) {
     try {
-      await this.requireAuth()
+      const user = await this.requireAuth()
       const { id } = await params
+
+      const userRole = user.role
+
+      if (!['ADMIN', 'SECRETARY', 'PROFESSIONAL', 'PATIENT', 'RESPONSIBLE'].includes(userRole)) {
+        return error({ status: 403, message: 'Forbidden' })
+      }
+
+      if (userRole === 'PATIENT' || userRole === 'RESPONSIBLE') {
+        const appointment = await appointmentService.findById(id)
+        if (!appointment) {
+          return notFound('Appointment')
+        }
+        const patient = await prisma.patient.findFirst({
+          where: { userId: user.id },
+          select: { id: true },
+        })
+        if (!patient || appointment.patientId !== patient.id) {
+          return error({ status: 403, message: 'You can only cancel your own appointments' })
+        }
+      }
 
       const body = await request.json()
       const { reason } = body
