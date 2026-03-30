@@ -41,10 +41,12 @@ interface Attendance {
 
 interface Patient {
   id: string
+  name: string | null
+  email: string | null
   user: {
     name: string | null
     email: string | null
-  }
+  } | null
   dateOfBirth: string | null
   phone: string | null
 }
@@ -189,8 +191,8 @@ export default function PatientHistoryPage() {
                 <p className="text-sm text-gray-500">Carregando...</p>
               ) : patient ? (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">{patient.user?.name || 'Nome não disponível'}</span>
-                  {patient.user?.email && ` - ${patient.user.email}`}
+                  <span className="font-medium">{patient.name || patient.user?.name || 'Nome não disponível'}</span>
+                  {(patient.email || patient.user?.email) && ` - ${patient.email || patient.user?.email}`}
                 </p>
               ) : (
                 <p className="text-sm text-red-500">Paciente não encontrado</p>
