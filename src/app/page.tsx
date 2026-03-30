@@ -24,6 +24,12 @@ interface Appointment {
 
 export default function Dashboard() {
   const { data: session, status } = useSessionContext()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const [stats, setStats] = useState<Stats>({
     totalPatients: 0,
     totalAppointments: 0,
@@ -138,7 +144,7 @@ export default function Dashboard() {
     }
   }
 
-  if (status === 'loading') {
+  if (!mounted || status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
