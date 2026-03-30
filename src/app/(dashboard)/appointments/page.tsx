@@ -45,6 +45,14 @@ export default function AppointmentsPage() {
     patientName: string | null
     professionalName: string | null
     appointmentDate: string | null
+    isViewOnly: boolean
+    attendanceData?: {
+      notes?: string | null
+      observations?: string | null
+      diagnosis?: string | null
+      treatmentPlan?: string | null
+      status: string
+    }
   }>({
     isOpen: false,
     appointmentId: null,
@@ -54,6 +62,7 @@ export default function AppointmentsPage() {
     patientName: null,
     professionalName: null,
     appointmentDate: null,
+    isViewOnly: false,
   })
 
   const fetchAppointments = useCallback(async () => {
@@ -255,6 +264,9 @@ export default function AppointmentsPage() {
       const res = await fetch(`/api/attendances/by-appointment/${appointment.id}`)
       const data = await res.json()
       
+      const hasAttendance = !!data.data?.id
+      const isCompleted = appointment.status === 'COMPLETED'
+      
       setAttendanceModal({
         isOpen: true,
         appointmentId: appointment.id,
@@ -264,6 +276,14 @@ export default function AppointmentsPage() {
         patientName: appointment.patientName,
         professionalName: appointment.professionalName,
         appointmentDate: appointment.scheduledDateTime,
+        isViewOnly: hasAttendance && isCompleted,
+        attendanceData: hasAttendance ? {
+          notes: data.data.notes,
+          observations: data.data.observations,
+          diagnosis: data.data.diagnosis,
+          treatmentPlan: data.data.treatmentPlan,
+          status: data.data.status,
+        } : undefined,
       })
     } catch {
       toast.error('Erro ao carregar dados do atendimento')
@@ -415,6 +435,14 @@ export default function AppointmentsPage() {
                               </button>
                             </>
                           )}
+                          {apt.status === 'COMPLETED' && (
+                            <button
+                              onClick={() => handleOpenAttendanceModal(apt)}
+                              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              Ver Detalhes
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -462,22 +490,23 @@ export default function AppointmentsPage() {
       <AttendanceModal
         isOpen={attendanceModal.isOpen}
         onClose={() => setAttendanceModal(prev => ({ ...prev, isOpen: false }))}
-        onSubmit={handleCompleteAttendance}
+        onSubmit={attendanceModal.isViewOnly ? undefined : handleCompleteAttendance}
         appointmentId={attendanceModal.appointmentId || ''}
         patientId={attendanceModal.patientId || ''}
         professionalId={attendanceModal.professionalId || ''}
         patientName={attendanceModal.patientName || ''}
         professionalName={attendanceModal.professionalName || ''}
         appointmentDate={attendanceModal.appointmentDate || ''}
-        initialData={attendanceModal.attendanceId ? {
-          id: attendanceModal.attendanceId,
-          notes: null,
-          observations: null,
-          diagnosis: null,
-          treatmentPlan: null,
-          status: 'IN_PROGRESS'
+        initialData={attendanceModal.attendanceData ? {
+          id: attendanceModal.attendanceId || '',
+          notes: attendanceModal.attendanceData.notes,
+          observations: attendanceModal.attendanceData.observations,
+          diagnosis: attendanceModal.attendanceData.diagnosis,
+          treatmentPlan: attendanceModal.attendanceData.treatmentPlan,
+          status: attendanceModal.attendanceData.status
         } : undefined}
-        isEditMode={!!attendanceModal.attendanceId}
+        isEditMode={!!attendanceModal.attendanceId && !attendanceModal.isViewOnly}
+        isViewOnly={attendanceModal.isViewOnly}
       />
     </div>
   )
