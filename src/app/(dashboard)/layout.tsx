@@ -109,6 +109,13 @@ export default function DashboardLayout({
                       className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                       aria-label="Calendário de consultas"
                     >
+                      Calendário
+                    </Link>
+                    <Link 
+                      href="/appointments" 
+                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                      aria-label="Lista de agendamentos"
+                    >
                       Agendamentos
                     </Link>
                     {(isAdmin || isCoordinator) && (
